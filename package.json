@@ -1,12 +1,75 @@
 {
-  "name": "autowebhook",
-  "module": "index.ts",
+  "name": "@yourname/autowebhook",
+  "version": "1.0.0",
+  "description": "Automatic ngrok tunnel manager with health checking for webhooks",
+  "keywords": [
+    "ngrok",
+    "webhook",
+    "tunnel",
+    "telegram",
+    "bot",
+    "typescript",
+    "bun",
+    "health-check",
+    "auto-restart"
+  ],
+  "author": "rozeraf",
+  "license": "GPL-3.0-only",
   "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && bun build src/index.ts --outdir dist --target node",
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run examples/basic.ts",
+    "test": "bun test",
+    "lint": "tsc --noEmit",
+    "lint:fix": "tsc --noEmit && bun run format",
+    "format": "prettier --write \"src/**/*.ts\" \"examples/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"examples/**/*.ts\"",
+    "typecheck": "tsc --noEmit --skipLibCheck",
+    "example:basic": "bun run examples/basic.ts",
+    "example:telegram": "bun run examples/telegram-bot.ts",
+    "prepublishOnly": "bun run lint && bun run typecheck && bun run test",
+    "clean": "rm -rf dist node_modules/.cache",
+    "version": "bun run format && git add -A src"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.0.0"
+  },
+  "optionalDependencies": {},
+  "bundleDependencies": [],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
