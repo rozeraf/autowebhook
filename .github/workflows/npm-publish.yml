@@ -1,5 +1,4 @@
 name: Bun Package
-
 on:
   push:
     tags:
@@ -10,36 +9,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Bun
-        run: curl -fsSL https://bun.sh/install | bash
-        # Bun устанавливается в $HOME/.bun/bin, добавляем в PATH
-      - run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
-
+        uses: oven-sh/setup-bun@v1
       - name: Install dependencies
         run: bun install
-
       - name: Run tests
-        run: bun lint
+        run: bun run lint
 
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Bun
-        run: curl -fsSL https://bun.sh/install | bash
-      - run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
-
+        uses: oven-sh/setup-bun@v1
       - name: Install dependencies
         run: bun install
-
-      - name: Authenticate npm for Bun
-        run: echo "${{ secrets.NPM_TOKEN }}" | bunx npm login --token
-
-
+      - name: Create .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
       - name: Publish to npm
-        run: bun publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: bun publish --access public
