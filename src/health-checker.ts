@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from 'axios';
 import type { AutoWebhookConfig, NgrokApiResponse, TunnelInfo, HealthStatus } from './types.js';
 
 export class NgrokHealthChecker extends EventEmitter {
-  private checkInterval?: NodeJS.Timeout;
+  private checkInterval: NodeJS.Timeout | undefined;
   private failureCount = 0;
   private readonly config: Required<NonNullable<AutoWebhookConfig['healthCheck']>>;
   private lastSuccessfulCheck = Date.now();

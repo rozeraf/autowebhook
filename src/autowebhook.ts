@@ -5,7 +5,7 @@ import { NgrokHealthChecker } from './health-checker.js';
 import type { AutoWebhookConfig, TunnelInfo, NgrokApiResponse } from './types.js';
 
 export class AutoWebhook extends EventEmitter {
-  private ngrokProcess?: ChildProcess;
+  private ngrokProcess: ChildProcess | undefined;
   private currentUrl: string = '';
   private healthChecker: NgrokHealthChecker;
   private isRestarting = false;
