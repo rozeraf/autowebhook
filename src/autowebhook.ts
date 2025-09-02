@@ -71,18 +71,22 @@ export class AutoWebhook extends EventEmitter {
       console.log(`[AutoWebhook] Starting ngrok with args:`, args);
       
       this.ngrokProcess = spawn('ngrok', args, {
-        stdio: ['ignore', 'pipe', 'pipe']
+        stdio: ['ignore', 'ignore', 'pipe'] // Don't need stdout
       });
 
-      let urlFound = false;
+      const timeout = 30000;
 
-      this.ngrokProcess.stdout?.on('data', (data: Buffer) => {
-        const output = data.toString();
-        
-        if (!urlFound) {
-          const url = this.extractUrlFromOutput(output);
-          if (url) {
-            urlFound = true;
+      // Poller to check ngrok API
+      const poller = setInterval(async () => {
+        try {
+          const tunnels = await this.checkTunnel();
+          // Find the https tunnel
+          const httpsTunnel = tunnels.find(t => t.proto === 'https');
+          if (httpsTunnel?.public_url) {
+            clearInterval(poller);
+            clearTimeout(timeoutId);
+            
+            const url = httpsTunnel.public_url;
             this.currentUrl = url;
             this.config.onUrlChange(url);
             this.healthChecker.start(url);
@@ -90,19 +94,33 @@ export class AutoWebhook extends EventEmitter {
             console.log(`[AutoWebhook] Tunnel ready: ${url}`);
             resolve(url);
           }
+        } catch (e) {
+          // ngrok API not ready yet, ignore
         }
-      });
+      }, 1000); // Poll every second
+
+      // Timeout for the whole process
+      const timeoutId = setTimeout(() => {
+        clearInterval(poller);
+        reject(new Error(`Timeout: ngrok failed to provide URL within ${timeout / 1000} seconds`));
+      }, timeout);
+
+      // --- Process event handlers ---
 
       this.ngrokProcess.stderr?.on('data', (data: Buffer) => {
         const error = data.toString();
         console.error(`[AutoWebhook] ngrok stderr: ${error}`);
-        
         if (error.includes('failed to start tunnel')) {
+          clearInterval(poller);
+          clearTimeout(timeoutId);
           reject(new Error(`Failed to start tunnel: ${error}`));
         }
       });
 
       this.ngrokProcess.on('exit', (code: number | null) => {
+        // This will be called when the process terminates.
+        // If the promise is not resolved yet, the timeout will eventually reject it.
+        clearInterval(poller);
         console.log(`[AutoWebhook] ngrok process exited with code ${code}`);
         this.ngrokProcess = undefined;
         this.healthChecker.stop();
@@ -114,17 +132,14 @@ export class AutoWebhook extends EventEmitter {
       });
 
       this.ngrokProcess.on('error', (error: Error) => {
+        // This is for spawn errors
+        clearInterval(poller);
+        clearTimeout(timeoutId);
         console.error(`[AutoWebhook] ngrok process error:`, error);
         this.config.onError(error);
         this.emit('error', error);
         reject(error);
       });
-
-      setTimeout(() => {
-        if (!urlFound) {
-          reject(new Error('Timeout: ngrok failed to provide URL within 30 seconds'));
-        }
-      }, 30000);
     });
   }
 
@@ -152,10 +167,7 @@ export class AutoWebhook extends EventEmitter {
     return args;
   }
 
-  private extractUrlFromOutput(output: string): string | null {
-    const urlMatch = output.match(/https:\/\/[a-f0-9]+\.ngrok(?:-free)?\.(?:app|io)/);
-    return urlMatch ? urlMatch[0] : null;
-  }
+  
 
   private async handleUnexpectedExit(): Promise<void> {
     if (this.startAttempts < this.maxStartAttempts) {
