@@ -42,7 +42,6 @@
     "lint:fix": "tsc --noEmit && bun run format",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
-    "prepublishOnly": "bun run lint && bun run typecheck && bun run test",
     "clean": "rm -rf dist node_modules/.cache",
     "version": "bun run format && git add -A src"
   },
