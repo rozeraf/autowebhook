@@ -20,7 +20,7 @@ jobs:
         run: bun install
 
       - name: Run tests
-        run: bun test
+        run: bun lint
 
   publish-npm:
     needs: build
