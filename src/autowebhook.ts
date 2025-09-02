@@ -11,14 +11,14 @@ export class AutoWebhook extends EventEmitter {
   private isRestarting = false;
   private startAttempts = 0;
   private readonly maxStartAttempts = 5;
-  
+
   private readonly config: Required<Omit<AutoWebhookConfig, 'healthCheck'>> & {
     healthCheck: AutoWebhookConfig['healthCheck'];
   };
 
   constructor(config: AutoWebhookConfig = {}) {
     super();
-    
+
     this.config = {
       port: 3000,
       command: '',
@@ -29,7 +29,7 @@ export class AutoWebhook extends EventEmitter {
       onError: () => {},
       onRestart: () => {},
       healthCheck: config.healthCheck,
-      ...config
+      ...config,
     };
 
     this.healthChecker = new NgrokHealthChecker(this.config.healthCheck);
@@ -67,11 +67,11 @@ export class AutoWebhook extends EventEmitter {
   private async startNgrokProcess(): Promise<string> {
     return new Promise((resolve, reject) => {
       const args = this.buildNgrokArgs();
-      
+
       console.log(`[AutoWebhook] Starting ngrok with args:`, args);
-      
+
       this.ngrokProcess = spawn('ngrok', args, {
-        stdio: ['ignore', 'ignore', 'pipe'] // Don't need stdout
+        stdio: ['ignore', 'ignore', 'pipe'], // Don't need stdout
       });
 
       const timeout = 30000;
@@ -85,7 +85,7 @@ export class AutoWebhook extends EventEmitter {
           if (httpsTunnel?.public_url) {
             clearInterval(poller);
             clearTimeout(timeoutId);
-            
+
             const url = httpsTunnel.public_url;
             this.currentUrl = url;
             this.config.onUrlChange(url);
@@ -124,7 +124,7 @@ export class AutoWebhook extends EventEmitter {
         console.log(`[AutoWebhook] ngrok process exited with code ${code}`);
         this.ngrokProcess = undefined;
         this.healthChecker.stop();
-        
+
         if (!this.isRestarting && code !== 0) {
           this.emit('error', new Error(`ngrok exited with code ${code}`));
           this.handleUnexpectedExit().catch(console.error);
@@ -145,7 +145,7 @@ export class AutoWebhook extends EventEmitter {
 
   private buildNgrokArgs(): string[] {
     const args: string[] = [];
-    
+
     if (this.config.command) {
       args.push(...this.config.command.split(' '));
     } else {
@@ -167,11 +167,11 @@ export class AutoWebhook extends EventEmitter {
     return args;
   }
 
-  
-
   private async handleUnexpectedExit(): Promise<void> {
     if (this.startAttempts < this.maxStartAttempts) {
-      console.log(`[AutoWebhook] Attempting to restart (attempt ${this.startAttempts + 1}/${this.maxStartAttempts})`);
+      console.log(
+        `[AutoWebhook] Attempting to restart (attempt ${this.startAttempts + 1}/${this.maxStartAttempts})`
+      );
       await this.restart();
     } else {
       console.error(`[AutoWebhook] Max restart attempts reached (${this.maxStartAttempts})`);
@@ -187,7 +187,7 @@ export class AutoWebhook extends EventEmitter {
 
     this.isRestarting = true;
     this.startAttempts++;
-    
+
     console.log('[AutoWebhook] Restarting ngrok tunnel...');
     this.config.onRestart();
     this.emit('restarting');
@@ -195,10 +195,10 @@ export class AutoWebhook extends EventEmitter {
     try {
       await this.stop();
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       const newUrl = await this.startNgrokProcess();
       this.emit('restarted', newUrl);
-      
+
       return newUrl;
     } catch (error) {
       console.error('[AutoWebhook] Restart failed:', error);
@@ -210,18 +210,18 @@ export class AutoWebhook extends EventEmitter {
 
   async stop(): Promise<void> {
     this.healthChecker.stop();
-    
+
     if (this.ngrokProcess) {
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const process = this.ngrokProcess!;
-        
+
         process.on('exit', () => {
           this.ngrokProcess = undefined;
           resolve();
         });
 
         process.kill('SIGTERM');
-        
+
         setTimeout(() => {
           if (this.ngrokProcess) {
             process.kill('SIGKILL');
@@ -241,13 +241,15 @@ export class AutoWebhook extends EventEmitter {
       currentUrl: this.currentUrl,
       isRestarting: this.isRestarting,
       startAttempts: this.startAttempts,
-      healthStatus: this.healthChecker.getStatus()
+      healthStatus: this.healthChecker.getStatus(),
     };
   }
 
   async checkTunnel(): Promise<TunnelInfo[]> {
     try {
-      const response: AxiosResponse<NgrokApiResponse> = await axios.get('http://localhost:4040/api/tunnels');
+      const response: AxiosResponse<NgrokApiResponse> = await axios.get(
+        'http://localhost:4040/api/tunnels'
+      );
       return response.data.tunnels;
     } catch (error) {
       throw new Error(`Failed to check ngrok API: ${error}`);

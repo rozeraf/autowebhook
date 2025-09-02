@@ -15,7 +15,7 @@ export class NgrokHealthChecker extends EventEmitter {
       interval: 15000,
       timeout: 5000,
       maxFailures: 3,
-      ...config
+      ...config,
     };
   }
 
@@ -37,9 +37,12 @@ export class NgrokHealthChecker extends EventEmitter {
 
   private async performHealthCheck(currentUrl: string): Promise<void> {
     try {
-      const apiResponse: AxiosResponse<NgrokApiResponse> = await axios.get('http://localhost:4040/api/tunnels', {
-        timeout: this.config.timeout
-      });
+      const apiResponse: AxiosResponse<NgrokApiResponse> = await axios.get(
+        'http://localhost:4040/api/tunnels',
+        {
+          timeout: this.config.timeout,
+        }
+      );
 
       const tunnels: TunnelInfo[] = apiResponse.data.tunnels;
       const activeTunnel = tunnels.find(t => t.public_url === currentUrl);
@@ -50,7 +53,7 @@ export class NgrokHealthChecker extends EventEmitter {
 
       await axios.get(currentUrl, {
         timeout: this.config.timeout,
-        validateStatus: () => true
+        validateStatus: () => true,
       });
 
       this.onHealthCheckSuccess();
@@ -79,7 +82,7 @@ export class NgrokHealthChecker extends EventEmitter {
       isHealthy: this.failureCount < this.config.maxFailures,
       failureCount: this.failureCount,
       lastSuccessfulCheck: this.lastSuccessfulCheck,
-      timeSinceLastSuccess: Date.now() - this.lastSuccessfulCheck
+      timeSinceLastSuccess: Date.now() - this.lastSuccessfulCheck,
     };
   }
 }
