@@ -137,3 +137,14 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Bun specific files
+bun.lockb
+bun.lock
+.bunfig.toml
+
+# Bun cache and temp directories
+.bun/
+
+# Bun build output (if using bun build)
+*.bun
