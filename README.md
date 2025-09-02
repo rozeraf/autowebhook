@@ -4,104 +4,104 @@
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Powered by Bun](https://img.shields.io/badge/powered%20by-Bun-black.svg?style=flat&logo=bun)](https://bun.sh)
 
-**AutoWebhook** — это библиотека для Node.js и Bun, которая автоматически создает и управляет туннелем [ngrok](https://ngrok.com/). Она обеспечивает стабильный публичный URL для вашего локального сервера, что идеально подходит для разработки и тестирования вебхуков для ботов (Telegram, Discord, Slack и др.), API и других сервисов.
+**AutoWebhook** is a library for Node.js and Bun that automatically creates and manages an [ngrok](https://ngrok.com/) tunnel. It provides a stable public URL for your local server, which is ideal for developing and testing webhooks for bots (Telegram, Discord, Slack, etc.), APIs, and other services.
 
-Библиотека запускает ngrok в фоновом режиме, отслеживает его состояние, автоматически перезапускает в случае сбоев и предоставляет простой API для получения актуального URL.
+The library runs ngrok in the background, monitors its status, automatically restarts it in case of failures, and provides a simple API to get the current URL.
 
-## Зачем нужен AutoWebhook?
+## Why AutoWebhook?
 
-При разработке ботов или сервисов, использующих вебхуки, вы сталкиваетесь с необходимостью иметь публичный HTTPS URL, который может принимать запросы от внешних платформ (например, Telegram). Ngrok отлично решает эту задачу, но требует ручного запуска, а бесплатная версия предоставляет временные URL, которые меняются при каждом перезапуске.
+When developing bots or services that use webhooks, you face the need for a public HTTPS URL that can receive requests from external platforms (like Telegram). Ngrok is excellent for this, but it requires manual startup, and the free version provides temporary URLs that change with each restart.
 
-**AutoWebhook** автоматизирует этот процесс:
-- **Автоматический запуск**: Запускает ngrok вместе с вашим приложением.
-- **Стабильный URL**: Автоматически получает URL туннеля и передает его в ваше приложение.
-- **Мониторинг и перезапуск**: Встроенная проверка работоспособности (health check) отслеживает состояние туннеля и перезапускает ngrok при сбоях, обеспечивая "вечный" вебхук для разработки.
-- **Простота**: Убирает необходимость в ручных действиях и дополнительных скриптах.
+**AutoWebhook** automates this process:
+- **Automatic Start**: Runs ngrok along with your application.
+- **Stable URL**: Automatically retrieves the tunnel URL and provides it to your application.
+- **Monitoring and Restart**: A built-in health check monitors the tunnel's status and restarts ngrok on failure, providing a "persistent" webhook for development.
+- **Simplicity**: Eliminates the need for manual steps and extra scripts.
 
-## Основные возможности
+## Core Features
 
-- **Автоматическое управление туннелем ngrok**: Запуск, остановка и перезапуск в фоновом режиме.
-- **Извлечение URL**: Парсит вывод ngrok для получения публичного URL.
-- **Проверка работоспособности**: Опциональный компонент для мониторинга состояния туннеля и конечной точки вашего приложения.
-- **Надежность**: Автоматический перезапуск при потере соединения или сбоях.
-- **Гибкая настройка**: Возможность указать порт, регион ngrok, субдомен, токен аутентификации и параметры проверки работоспособности.
-- **Событийная архитектура**: Получайте уведомления о готовности (`ready`), перезапуске (`restarting`) и ошибках (`error`).
-- **Поддержка TypeScript**: Полная типизация для надежной разработки.
+- **Automatic ngrok tunnel management**: Start, stop, and restart in the background.
+- **URL Retrieval**: Gets the public URL from the ngrok agent API.
+- **Health Check**: Optional component to monitor the status of the tunnel and your application's endpoint.
+- **Reliability**: Automatic restart on connection loss or failures.
+- **Flexible Configuration**: Ability to specify port, ngrok region, subdomain, auth token, and health check parameters.
+- **Event-driven Architecture**: Get real-time notifications for tunnel status changes (`ready`, `restarting`, `error`).
+- **TypeScript Support**: Fully typed for robust development.
 
-## Установка
+## Installation
 
 ```bash
 bun add @rozeraf/autowebhook
-# или с npm
+# or with npm
 npm install @rozeraf/autowebhook
-# или с yarn
+# or with yarn
 yarn add @rozeraf/autowebhook
 ```
 
-## Быстрый старт
+## Quick Start
 
-Вот как можно настроить вебхук для Telegram-бота за несколько строк:
+Here's how you can set up a webhook for a Telegram bot in just a few lines:
 
 ```typescript
 // bot.ts
 import { AutoWebhook } from '@rozeraf/autowebhook';
-import { Bot } from 'grammy'; // Пример с grammy
+import { Bot } from 'grammy'; // Example with grammy
 
-// 1. Инициализируем AutoWebhook, указав порт вашего локального сервера
+// 1. Initialize AutoWebhook, specifying the port of your local server
 const webhook = new AutoWebhook({ port: 3000 });
 
-// 2. Создаем экземпляр бота
+// 2. Create a bot instance
 const bot = new Bot('YOUR_TELEGRAM_BOT_TOKEN');
 
-// 3. Запускаем туннель и получаем URL
+// 3. Start the tunnel and get the URL
 const url = await webhook.start();
 
-// 4. Устанавливаем вебхук
+// 4. Set the webhook
 await bot.api.setWebhook(`${url}/webhook`);
 
-console.log(`Бот запущен с вебхуком: ${url}`);
+console.log(`Bot started with webhook: ${url}`);
 
-// Ваша логика для локального сервера, который будет слушать порт 3000
+// Your logic for the local server that will listen on port 3000
 // ...
 ```
 
-Больше примеров смотрите в файле [EXAMPLES.md](./EXAMPLES.md).
+For more examples, see the [EXAMPLES.md](./EXAMPLES.md) file.
 
-## Конфигурация
+## Configuration
 
-Вы можете настроить `AutoWebhook` через объект конфигурации в конструкторе:
+You can configure `AutoWebhook` via the configuration object in the constructor:
 
 ```typescript
 import { AutoWebhook } from '@rozeraf/autowebhook';
 
 const config = {
-  // Порт вашего локального сервера
+  // The port of your local server
   port: 8080,
   
-  // Или команда для запуска, если у вас сложная логика
+  // Or a command to run, if you have complex logic
   // command: 'python -m http.server 8080',
 
-  // Регион ngrok (us, eu, ap, au, sa, jp, in)
+  // ngrok region (us, eu, ap, au, sa, jp, in)
   region: 'eu',
 
-  // Пользовательский субдомен (требует платного тарифа ngrok)
+  // Custom subdomain (requires a paid ngrok plan)
   subdomain: 'my-cool-bot',
 
-  // Токен аутентификации ngrok
+  // ngrok authentication token
   auth: 'YOUR_NGROK_AUTHTOKEN',
 
-  // Настройки проверки работоспособности
+  // Health check settings
   healthCheck: {
-    enabled: true,       // Включить проверку
-    interval: 20000,     // Интервал проверки (мс)
-    timeout: 10000,      // Таймаут запроса (мс)
-    maxFailures: 3,      // Кол-во сбоев до перезапуска
+    enabled: true,       // Enable checking
+    interval: 20000,     // Check interval (ms)
+    timeout: 10000,      // Request timeout (ms)
+    maxFailures: 3,      // Number of failures before restart
   },
 
-  // Коллбэки
-  onUrlChange: (url) => console.log(`Новый URL: ${url}`),
-  onError: (error) => console.error(`Произошла ошибка: ${error}`),
-  onRestart: () => console.log('Перезапуск туннеля...'),
+  // Callbacks
+  onUrlChange: (url) => console.log(`New URL: ${url}`),
+  onError: (error) => console.error(`An error occurred: ${error}`),
+  onRestart: () => console.log('Restarting tunnel...'),
 };
 
 const webhook = new AutoWebhook(config);
@@ -110,60 +110,60 @@ await webhook.start();
 
 ### `AutoWebhookConfig`
 
-| Поле          | Тип                               | По умолчанию | Описание                                                                                             |
-|---------------|-----------------------------------|--------------|------------------------------------------------------------------------------------------------------|
-| `port`        | `number`                          | `3000`       | Порт локального сервера, на который ngrok будет проксировать трафик.                                  |
-| `command`     | `string`                          | `''`         | Альтернатива `port`. Команда для запуска ngrok (например, `http 80`). Переопределяет `port`.          |
-| `region`      | `string`                          | `'eu'`       | Регион сервера ngrok.                                                                                |
-| `subdomain`   | `string`                          | `''`         | Запросить конкретный субдомен (требует платного тарифа ngrok).                                         |
-| `auth`        | `string`                          | `''`         | Ваш токен аутентификации ngrok.                                                                      |
-| `healthCheck` | `HealthCheckConfig`               | `{...}`      | Объект конфигурации для модуля проверки работоспособности.                                           |
-| `onUrlChange` | `(url: string) => void`           | `() => {}`   | Коллбэк, вызываемый при получении или изменении URL.                                                 |
-| `onError`     | `(error: Error) => void`          | `() => {}`   | Коллбэк для обработки ошибок процесса ngrok.                                                         |
-| `onRestart`   | `() => void`                      | `() => {}`   | Коллбэк, вызываемый перед попыткой перезапуска туннеля.                                              |
+| Field         | Type                              | Default      | Description                                                                                             |
+|---------------|-----------------------------------|--------------|---------------------------------------------------------------------------------------------------------|
+| `port`        | `number`                          | `3000`       | The port of the local server that ngrok will proxy traffic to.                                          |
+| `command`     | `string`                          | `''`         | Alternative to `port`. Command to start ngrok (e.g., `http 80`). Overrides `port`.                      |
+| `region`      | `string`                          | `'eu'`       | The ngrok server region.                                                                                |
+| `subdomain`   | `string`                          | `''`         | Request a specific subdomain (requires a paid ngrok plan).                                              |
+| `auth`        | `string`                          | `''`         | Your ngrok authentication token.                                                                        |
+| `healthCheck` | `HealthCheckConfig`               | `{...}`      | Configuration object for the health check module.                                                       |
+| `onUrlChange` | `(url: string) => void`           | `() => {}`   | Callback invoked when the URL is retrieved or changed.                                                  |
+| `onError`     | `(error: Error) => void`          | `() => {}`   | Callback for handling errors from the ngrok process.                                                    |
+| `onRestart`   | `() => void`                      | `() => {}`   | Callback invoked before a tunnel restart is attempted.                                                  |
 
 ## API
 
 ### `webhook.start(): Promise<string>`
-Запускает туннель ngrok и возвращает `Promise`, который разрешается публичным URL.
+Starts the ngrok tunnel and returns a `Promise` that resolves with the public URL.
 
 ### `webhook.stop(): Promise<void>`
-Останавливает туннель ngrok.
+Stops the ngrok tunnel.
 
 ### `webhook.restart(): Promise<string>`
-Принудительно перезапускает туннель и возвращает новый URL.
+Forcibly restarts the tunnel and returns the new URL.
 
 ### `webhook.webhookUrl: string`
-Возвращает текущий активный URL туннеля.
+Returns the current active tunnel URL.
 
 ### `webhook.getStatus()`
-Возвращает объект с текущим состоянием туннеля, включая `isRunning`, `currentUrl`, `isRestarting` и статус проверки работоспособности.
+Returns an object with the current tunnel status, including `isRunning`, `currentUrl`, `isRestarting`, and the health check status.
 
-## События
+## Events
 
-Экземпляр `AutoWebhook` является `EventEmitter` и генерирует следующие события:
+The `AutoWebhook` instance is an `EventEmitter` and emits the following events:
 
-- `ready (url: string)`: Генерируется, когда туннель успешно запущен и URL получен.
-- `restarting`: Генерируется перед попыткой перезапуска туннеля.
-- `restarted (newUrl: string)`: Генерируется после успешного перезапуска.
-- `error (error: Error)`: Генерируется при возникновении ошибки в процессе ngrok.
-- `maxRestartsReached`: Генерируется, если достигнуто максимальное количество попыток перезапуска.
+- `ready (url: string)`: Emitted when the tunnel is successfully started and the URL is retrieved.
+- `restarting`: Emitted before a tunnel restart is attempted.
+- `restarted (newUrl: string)`: Emitted after a successful restart.
+- `error (error: Error)`: Emitted when an error occurs in the ngrok process.
+- `maxRestartsReached`: Emitted if the maximum number of restart attempts is reached.
 
-Пример использования:
+Example usage:
 ```typescript
 webhook.on('ready', (url) => {
-  console.log(`Туннель готов: ${url}`);
+  console.log(`Tunnel ready: ${url}`);
 });
 
 webhook.on('error', (err) => {
-  console.error('Ошибка ngrok:', err);
+  console.error('ngrok error:', err);
 });
 ```
 
-## Журнал изменений
+## Changelog
 
-Все изменения задокументированы в файле [CHANGELOG.md](./CHANGELOG.md).
+All changes are documented in the [CHANGELOG.md](./CHANGELOG.md) file.
 
-## Лицензия
+## License
 
-Этот проект распространяется под лицензией GPL-3.0-only. См. файл [LICENSE](./LICENSE) для получения дополнительной информации.
+This project is distributed under the GPL-3.0-only license. See the [LICENSE](./LICENSE) file for more information.
