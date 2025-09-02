@@ -1,6 +1,6 @@
 # AutoWebhook
 
-[![npm version](https://img.shields.io/npm/v/@yourname/autowebhook.svg)](https://www.npmjs.com/package/@yourname/autowebhook)
+[![npm version](https://img.shields.io/npm/v/@rozeraf/autowebhook.svg)](https://www.npmjs.com/package/@rozeraf/autowebhook)
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Powered by Bun](https://img.shields.io/badge/powered%20by-Bun-black.svg?style=flat&logo=bun)](https://bun.sh)
 
@@ -31,11 +31,11 @@
 ## Установка
 
 ```bash
-bun add @yourname/autowebhook
+bun add @rozeraf/autowebhook
 # или с npm
-npm install @yourname/autowebhook
+npm install @rozeraf/autowebhook
 # или с yarn
-yarn add @yourname/autowebhook
+yarn add @rozeraf/autowebhook
 ```
 
 ## Быстрый старт
@@ -44,7 +44,7 @@ yarn add @yourname/autowebhook
 
 ```typescript
 // bot.ts
-import { AutoWebhook } from '@yourname/autowebhook';
+import { AutoWebhook } from '@rozeraf/autowebhook';
 import { Bot } from 'grammy'; // Пример с grammy
 
 // 1. Инициализируем AutoWebhook, указав порт вашего локального сервера
@@ -72,7 +72,7 @@ console.log(`Бот запущен с вебхуком: ${url}`);
 Вы можете настроить `AutoWebhook` через объект конфигурации в конструкторе:
 
 ```typescript
-import { AutoWebhook } from '@yourname/autowebhook';
+import { AutoWebhook } from '@rozeraf/autowebhook';
 
 const config = {
   // Порт вашего локального сервера

@@ -8,7 +8,7 @@
 
 ```typescript
 // examples/basic.ts
-import { AutoWebhook } from '@yourname/autowebhook';
+import { AutoWebhook } from '@rozeraf/autowebhook';
 
 async function main() {
   // Инициализируем AutoWebhook, указывая порт вашего локального сервера
@@ -38,7 +38,7 @@ main();
 
 ```typescript
 // examples/telegram-bot.ts
-import { AutoWebhook } from '@yourname/autowebhook';
+import { AutoWebhook } from '@rozeraf/autowebhook';
 import { Bot, webhookCallback } from 'grammy';
 import express from 'express';
 
@@ -82,7 +82,7 @@ setupBot().catch(console.error);
 
 ```typescript
 // examples/advanced.ts
-import { AutoWebhook } from '@yourname/autowebhook';
+import { AutoWebhook } from '@rozeraf/autowebhook';
 
 const webhook = new AutoWebhook({
   port: 8080,
