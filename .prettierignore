@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+bun.lockb
+bun.lock
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+
+# Environment files
+.env*
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+
+# README and docs
+*.md
+
+# Package files
+package-lock.json
+yarn.lock
