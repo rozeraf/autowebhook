@@ -3,228 +3,171 @@ import { NgrokHealthChecker } from './health-checker.js';
 import { TunnelProvider } from './providers/base.js';
 import { NgrokProvider } from './providers/ngrok.js';
 import { LocalhostRunProvider } from './providers/localhostrun.js';
-import type { AutoWebhookConfig, ProviderName } from './types.js';
+import type { AutoWebhookConfig, TunnelConfig } from './types.js';
+
+interface ManagedTunnel {
+  config: TunnelConfig;
+  provider: TunnelProvider;
+  healthChecker: NgrokHealthChecker;
+  url: string;
+  startAttempts: number;
+}
 
 export class AutoWebhook extends EventEmitter {
   private readonly config: AutoWebhookConfig;
-  private healthChecker: NgrokHealthChecker;
-  private providers: TunnelProvider[];
-  private activeProviderIndex = 0;
-  private isSwitching = false;
-  private startAttempts = 0;
-  private readonly maxStartAttempts = 5; // Per provider
+  private tunnels: Map<string, ManagedTunnel> = new Map();
+  private isStopping = false;
+  private readonly maxStartAttempts = 5;
 
-  constructor(config: AutoWebhookConfig = {}) {
+  constructor(config: AutoWebhookConfig) {
     super();
-
     this.config = {
       port: 3000,
-      providers: ['ngrok'],
-      ngrok: {},
       expanded: false,
-      onUrlChange: () => {},
-      onError: () => {},
-      onRestart: () => {},
-      onProviderChange: () => {},
       healthCheck: { enabled: true, interval: 15000, timeout: 5000, maxFailures: 3 },
       ...config,
     };
+  }
 
-    this.providers = (this.config.providers || ['ngrok']).map(p => this.createProvider(p));
-    this.healthChecker = new NgrokHealthChecker(
+  async start(): Promise<string[]> {
+    this.isStopping = false;
+    const urls: string[] = [];
+    for (const tunnelConfig of this.config.tunnels) {
+      try {
+        const url = await this.startTunnel(tunnelConfig);
+        urls.push(url);
+      } catch (e) {
+        const error = e instanceof Error ? e : new Error(String(e));
+        console.error(`[AutoWebhook] Failed to start tunnel "${tunnelConfig.name}".`, error);
+        this.emit('error', new Error(`Failed to start tunnel "${tunnelConfig.name}"`));
+      }
+    }
+    return urls;
+  }
+
+  private async startTunnel(tunnelConfig: TunnelConfig): Promise<string> {
+    if (this.tunnels.has(tunnelConfig.name)) {
+      console.warn(`[AutoWebhook] Tunnel "${tunnelConfig.name}" is already running.`);
+      return this.tunnels.get(tunnelConfig.name)!.url;
+    }
+
+    console.log(`[AutoWebhook] Starting tunnel "${tunnelConfig.name}" with provider ${tunnelConfig.provider}...`);
+
+    const provider = this.createProvider(tunnelConfig);
+    const url = await provider.start();
+
+    const healthChecker = new NgrokHealthChecker(
       this.config.healthCheck,
       this.config.expanded
     );
-    this.setupHealthChecker();
-  }
+    healthChecker.start(url);
 
-  private createProvider(name: ProviderName): TunnelProvider {
-    switch (name) {
-      case 'ngrok':
-        return new NgrokProvider(this.config);
-      case 'localhost.run':
-        return new LocalhostRunProvider(this.config);
-      default:
-        throw new Error(`Unknown provider: ${name}`);
-    }
-  }
-
-  private setupHealthChecker(): void {
-    this.healthChecker.on('critical', async (error: Error) => {
-      if (!this.isSwitching) {
-        const provider = this.getActiveProvider();
-        if (provider) {
-          console.warn(`[AutoWebhook] Health check critical failure for ${provider.name}: ${error.message}`);
-          await this.switchToNextProvider();
-        }
-      }
+    healthChecker.on('critical', async (error: Error) => {
+      if (this.isStopping) return;
+      console.warn(`[AutoWebhook] Tunnel "${tunnelConfig.name}" is down: ${error.message}`);
+      this.emit('tunnelDown', tunnelConfig.name, error);
+      await this.restartTunnel(tunnelConfig);
     });
 
-    this.healthChecker.on('unhealthy', (error: Error, failureCount: number) => {
-      const provider = this.getActiveProvider();
-      if (provider) {
-        console.warn(`[AutoWebhook] Health check failed for ${provider.name} (${failureCount}): ${error.message}`);
-      }
-    });
-  }
+    const managedTunnel: ManagedTunnel = {
+      config: tunnelConfig,
+      provider,
+      healthChecker,
+      url,
+      startAttempts: 0,
+    };
+    this.tunnels.set(tunnelConfig.name, managedTunnel);
 
-  async start(): Promise<string> {
-    const provider = this.getActiveProvider();
-    if (provider?.currentUrl) {
-      console.warn('[AutoWebhook] Already running');
-      return provider.currentUrl;
-    }
+    console.log(`[AutoWebhook] Tunnel "${tunnelConfig.name}" ready: ${url}`);
+    this.emit('tunnelReady', tunnelConfig.name, url);
 
-    try {
-      const url = await this.tryStartingProviders();
-      this.startAttempts = 0;
-      return url;
-    } catch (error) {
-      this.emit('error', error);
-      throw error;
-    }
-  }
-
-  private async tryStartingProviders(): Promise<string> {
-    if (!this.providers || this.providers.length === 0) {
-      throw new Error('No providers configured.');
-    }
-    for (let i = 0; i < this.providers.length; i++) {
-      const provider = this.getActiveProvider();
-      if (!provider) {
-        this.activeProviderIndex = (this.activeProviderIndex + 1) % this.providers.length;
-        continue;
-      }
-      try {
-        const url = await this.startProvider(provider);
-        return url;
-      } catch (error) {
-        console.error(`[AutoWebhook] Provider ${provider.name} failed to start.`, error);
-        this.activeProviderIndex = (this.activeProviderIndex + 1) % this.providers.length;
-      }
-    }
-    throw new Error('All configured providers failed to start.');
-  }
-
-  private async startProvider(provider: TunnelProvider): Promise<string> {
-    provider.on('exit', (code: number | null) => {
-      if (!this.isSwitching) {
-        console.log(`[AutoWebhook] ${provider.name} process exited with code ${code}`);
-        this.healthChecker.stop();
-        this.handleUnexpectedExit();
-      }
-    });
-
-    const url = await provider.start();
-    this.config.onUrlChange?.(url);
-    this.healthChecker.start(url);
-    this.emit('ready', url);
     return url;
   }
 
-  private async handleUnexpectedExit(): Promise<void> {
-    const provider = this.getActiveProvider();
-    if (!provider) return;
+  private createProvider(tunnelConfig: TunnelConfig): TunnelProvider {
+    const providerConfig = {
+      ...this.config,
+      port: tunnelConfig.port || this.config.port || 3000,
+      ngrok: tunnelConfig.ngrok,
+    };
 
-    if (this.startAttempts < this.maxStartAttempts) {
-      console.log(
-        `[AutoWebhook] Attempting to restart ${provider.name} (attempt ${this.startAttempts + 1}/${this.maxStartAttempts})`
-      );
-      await this.restart();
-    } else {
-      console.error(`[AutoWebhook] Max restart attempts reached for ${provider.name}. Switching to next provider.`);
-      await this.switchToNextProvider();
+    switch (tunnelConfig.provider) {
+      case 'ngrok':
+        return new NgrokProvider(providerConfig);
+      case 'localhost.run':
+        return new LocalhostRunProvider(providerConfig);
+      default:
+        throw new Error(`Unknown provider: ${tunnelConfig.provider}`);
     }
   }
 
-  async restart(): Promise<string> {
-    const provider = this.getActiveProvider();
-    if (!provider) {
-      throw new Error('Cannot restart, no active provider.');
+  private async restartTunnel(tunnelConfig: TunnelConfig): Promise<void> {
+    if (this.isStopping) return;
+
+    const managedTunnel = this.tunnels.get(tunnelConfig.name);
+    if (!managedTunnel) {
+      console.error(`[AutoWebhook] Cannot restart tunnel "${tunnelConfig.name}", not found.`);
+      return;
     }
 
-    this.startAttempts++;
-    console.log(`[AutoWebhook] Restarting ${provider.name}...`);
-    this.config.onRestart?.();
-    this.emit('restarting');
+    // Stop and remove the old tunnel first
+    managedTunnel.healthChecker.stop();
+    await managedTunnel.provider.stop();
+    this.tunnels.delete(tunnelConfig.name);
 
-    await provider.stop();
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    const newStartAttempts = (managedTunnel.startAttempts || 0) + 1;
+
+    if (newStartAttempts > this.maxStartAttempts) {
+      console.error(`[AutoWebhook] Max restart attempts reached for tunnel "${tunnelConfig.name}". Giving up.`);
+      this.emit('error', new Error(`Max restart attempts reached for tunnel "${tunnelConfig.name}"`));
+      return;
+    }
+
+    console.log(`[AutoWebhook] Restarting tunnel "${tunnelConfig.name}" (attempt ${newStartAttempts})...`);
 
     try {
-      const newUrl = await this.startProvider(provider);
-      this.emit('restarted', newUrl);
-      return newUrl;
-    } catch (error) {
-      console.error(`[AutoWebhook] Restart failed for ${provider.name}:`, error);
-      console.log('[AutoWebhook] Attempting to switch to next provider.');
-      return this.switchToNextProvider();
-    }
-  }
-
-  async switchToNextProvider(): Promise<string> {
-    const currentProvider = this.getActiveProvider();
-    if (this.isSwitching || !currentProvider) {
-      return this.webhookUrl;
-    }
-    this.isSwitching = true;
-    this.startAttempts = 0;
-
-    console.log(`[AutoWebhook] Stopping ${currentProvider.name}...`);
-    await currentProvider.stop();
-    this.healthChecker.stop();
-
-    this.activeProviderIndex = (this.activeProviderIndex + 1) % this.providers.length;
-    const newProvider = this.getActiveProvider();
-
-    if (!newProvider) {
-      this.isSwitching = false;
-      throw new Error('Failed to get next provider.');
-    }
-
-    console.log(`[AutoWebhook] Switching to ${newProvider.name}...`);
-    this.config.onProviderChange?.(newProvider.name);
-    this.emit('providerChanged', newProvider.name);
-
-    try {
-      const url = await this.startProvider(newProvider);
-      this.isSwitching = false;
-      return url;
-    } catch (error) {
-      this.isSwitching = false;
-      console.error(`[AutoWebhook] Failed to switch to provider ${newProvider.name}.`, error);
-      if (this.providers.length > 1 && newProvider.name !== currentProvider.name) {
-        return this.switchToNextProvider();
+      const url = await this.startTunnel(tunnelConfig);
+      const newManagedTunnel = this.tunnels.get(tunnelConfig.name);
+      if (newManagedTunnel) {
+        newManagedTunnel.url = url;
+        newManagedTunnel.startAttempts = newStartAttempts;
       }
-      throw error;
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      console.error(`[AutoWebhook] Failed to restart tunnel "${tunnelConfig.name}".`, error);
+      // It will be tried again on the next health check failure.
     }
   }
 
   async stop(): Promise<void> {
-    this.healthChecker.stop();
-    const provider = this.getActiveProvider();
-    if (provider) {
-      await provider.stop();
-    }
+    this.isStopping = true;
+    console.log('[AutoWebhook] Stopping all tunnels...');
+    const stopPromises = Array.from(this.tunnels.values()).map(tunnel => {
+      tunnel.healthChecker.stop();
+      return tunnel.provider.stop();
+    });
+    await Promise.all(stopPromises);
+    this.tunnels.clear();
+    console.log('[AutoWebhook] All tunnels stopped.');
   }
 
-  get webhookUrl(): string {
-    return this.getActiveProvider()?.currentUrl || '';
+  getUrls(): string[] {
+    return Array.from(this.tunnels.values()).map(t => t.url);
   }
 
   getStatus() {
-    const provider = this.getActiveProvider();
+    const tunnelsStatus: { [key: string]: any } = {};
+    for (const [name, tunnel] of this.tunnels.entries()) {
+      tunnelsStatus[name] = {
+        isRunning: tunnel.provider.isRunning(),
+        url: tunnel.url,
+        provider: tunnel.config.provider,
+        startAttempts: tunnel.startAttempts,
+        health: tunnel.healthChecker.getStatus(),
+      };
+    }
     return {
-      isRunning: provider?.isRunning() || false,
-      currentUrl: this.webhookUrl,
-      activeProvider: provider?.name,
-      isSwitching: this.isSwitching,
-      startAttempts: this.startAttempts,
-      healthStatus: this.healthChecker.getStatus(),
+      tunnels: tunnelsStatus,
     };
-  }
-
-  private getActiveProvider(): TunnelProvider | undefined {
-    return this.providers[this.activeProviderIndex];
   }
 }

@@ -6,7 +6,7 @@ export abstract class TunnelProvider extends EventEmitter {
   protected process: ChildProcess | undefined;
   public currentUrl = '';
 
-  constructor(protected config: AutoWebhookConfig) {
+  constructor(protected config: any) {
     super();
   }
 
