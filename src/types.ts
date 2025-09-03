@@ -4,6 +4,7 @@ export interface AutoWebhookConfig {
   region?: 'us' | 'eu' | 'ap' | 'au' | 'sa' | 'jp' | 'in';
   subdomain?: string;
   auth?: string;
+  expanded?: boolean;
   healthCheck?: {
     enabled: boolean;
     interval: number;

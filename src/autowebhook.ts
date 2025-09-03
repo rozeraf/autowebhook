@@ -29,10 +29,11 @@ export class AutoWebhook extends EventEmitter {
       onError: () => {},
       onRestart: () => {},
       healthCheck: config.healthCheck,
+      expanded: false,
       ...config,
     };
 
-    this.healthChecker = new NgrokHealthChecker(this.config.healthCheck);
+    this.healthChecker = new NgrokHealthChecker(this.config.healthCheck, this.config.expanded);
     this.setupHealthChecker();
   }
 
