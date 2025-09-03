@@ -104,6 +104,8 @@ dist
 # vitepress cache directory
 **/.vitepress/cache
 
+GEMINI.md
+
 # Docusaurus cache and generated files
 .docusaurus
 
