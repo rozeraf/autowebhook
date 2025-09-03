@@ -51,15 +51,14 @@ export class AutoWebhook extends EventEmitter {
       return this.tunnels.get(tunnelConfig.name)!.url;
     }
 
-    console.log(`[AutoWebhook] Starting tunnel "${tunnelConfig.name}" with provider ${tunnelConfig.provider}...`);
+    console.log(
+      `[AutoWebhook] Starting tunnel "${tunnelConfig.name}" with provider ${tunnelConfig.provider}...`
+    );
 
     const provider = this.createProvider(tunnelConfig);
     const url = await provider.start();
 
-    const healthChecker = new NgrokHealthChecker(
-      this.config.healthCheck,
-      this.config.expanded
-    );
+    const healthChecker = new NgrokHealthChecker(this.config.healthCheck, this.config.expanded);
     healthChecker.start(url);
 
     healthChecker.on('critical', async (error: Error) => {
@@ -118,12 +117,19 @@ export class AutoWebhook extends EventEmitter {
     const newStartAttempts = (managedTunnel.startAttempts || 0) + 1;
 
     if (newStartAttempts > this.maxStartAttempts) {
-      console.error(`[AutoWebhook] Max restart attempts reached for tunnel "${tunnelConfig.name}". Giving up.`);
-      this.emit('error', new Error(`Max restart attempts reached for tunnel "${tunnelConfig.name}"`));
+      console.error(
+        `[AutoWebhook] Max restart attempts reached for tunnel "${tunnelConfig.name}". Giving up.`
+      );
+      this.emit(
+        'error',
+        new Error(`Max restart attempts reached for tunnel "${tunnelConfig.name}"`)
+      );
       return;
     }
 
-    console.log(`[AutoWebhook] Restarting tunnel "${tunnelConfig.name}" (attempt ${newStartAttempts})...`);
+    console.log(
+      `[AutoWebhook] Restarting tunnel "${tunnelConfig.name}" (attempt ${newStartAttempts})...`
+    );
 
     try {
       const url = await this.startTunnel(tunnelConfig);

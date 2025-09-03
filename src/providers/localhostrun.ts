@@ -39,7 +39,11 @@ export class LocalhostRunProvider extends TunnelProvider {
       const timeout = 30000;
       const timeoutId = setTimeout(() => {
         if (!urlFound) {
-          reject(new Error(`Timeout: localhost.run failed to provide URL within ${timeout / 1000} seconds`));
+          reject(
+            new Error(
+              `Timeout: localhost.run failed to provide URL within ${timeout / 1000} seconds`
+            )
+          );
         }
       }, timeout);
 
@@ -47,7 +51,9 @@ export class LocalhostRunProvider extends TunnelProvider {
         clearTimeout(timeoutId);
         this.emit('exit', code);
         if (!urlFound) {
-          reject(new Error(`localhost.run process exited with code ${code} before providing a URL.`));
+          reject(
+            new Error(`localhost.run process exited with code ${code} before providing a URL.`)
+          );
         }
       });
 
