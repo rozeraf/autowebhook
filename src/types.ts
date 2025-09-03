@@ -1,9 +1,14 @@
+export type ProviderName = 'ngrok' | 'localhost.run';
+
 export interface AutoWebhookConfig {
   port?: number;
-  command?: string;
-  region?: 'us' | 'eu' | 'ap' | 'au' | 'sa' | 'jp' | 'in';
-  subdomain?: string;
-  auth?: string;
+  providers?: ProviderName[];
+  ngrok?: {
+    command?: string;
+    region?: 'us' | 'eu' | 'ap' | 'au' | 'sa' | 'jp' | 'in';
+    subdomain?: string;
+    auth?: string;
+  };
   expanded?: boolean;
   healthCheck?: {
     enabled: boolean;
@@ -14,6 +19,7 @@ export interface AutoWebhookConfig {
   onUrlChange?: (url: string) => void;
   onError?: (error: Error) => void;
   onRestart?: () => void;
+  onProviderChange?: (provider: ProviderName) => void;
 }
 
 export interface TunnelInfo {

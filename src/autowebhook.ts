@@ -1,259 +1,230 @@
-import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
-import axios, { AxiosResponse } from 'axios';
 import { NgrokHealthChecker } from './health-checker.js';
-import type { AutoWebhookConfig, TunnelInfo, NgrokApiResponse } from './types.js';
+import { TunnelProvider } from './providers/base.js';
+import { NgrokProvider } from './providers/ngrok.js';
+import { LocalhostRunProvider } from './providers/localhostrun.js';
+import type { AutoWebhookConfig, ProviderName } from './types.js';
 
 export class AutoWebhook extends EventEmitter {
-  private ngrokProcess: ChildProcess | undefined;
-  private currentUrl: string = '';
+  private readonly config: AutoWebhookConfig;
   private healthChecker: NgrokHealthChecker;
-  private isRestarting = false;
+  private providers: TunnelProvider[];
+  private activeProviderIndex = 0;
+  private isSwitching = false;
   private startAttempts = 0;
-  private readonly maxStartAttempts = 5;
-
-  private readonly config: Required<Omit<AutoWebhookConfig, 'healthCheck'>> & {
-    healthCheck: AutoWebhookConfig['healthCheck'];
-  };
+  private readonly maxStartAttempts = 5; // Per provider
 
   constructor(config: AutoWebhookConfig = {}) {
     super();
 
     this.config = {
       port: 3000,
-      command: '',
-      region: 'eu',
-      subdomain: '',
-      auth: '',
+      providers: ['ngrok'],
+      ngrok: {},
+      expanded: false,
       onUrlChange: () => {},
       onError: () => {},
       onRestart: () => {},
-      healthCheck: config.healthCheck,
-      expanded: false,
+      onProviderChange: () => {},
+      healthCheck: { enabled: true, interval: 15000, timeout: 5000, maxFailures: 3 },
       ...config,
     };
 
-    this.healthChecker = new NgrokHealthChecker(this.config.healthCheck, this.config.expanded);
+    this.providers = (this.config.providers || ['ngrok']).map(p => this.createProvider(p));
+    this.healthChecker = new NgrokHealthChecker(
+      this.config.healthCheck,
+      this.config.expanded
+    );
     this.setupHealthChecker();
+  }
+
+  private createProvider(name: ProviderName): TunnelProvider {
+    switch (name) {
+      case 'ngrok':
+        return new NgrokProvider(this.config);
+      case 'localhost.run':
+        return new LocalhostRunProvider(this.config);
+      default:
+        throw new Error(`Unknown provider: ${name}`);
+    }
   }
 
   private setupHealthChecker(): void {
     this.healthChecker.on('critical', async (error: Error) => {
-      if (!this.isRestarting) {
-        console.warn(`[AutoWebhook] Health check critical failure: ${error.message}`);
-        await this.restart();
+      if (!this.isSwitching) {
+        const provider = this.getActiveProvider();
+        if (provider) {
+          console.warn(`[AutoWebhook] Health check critical failure for ${provider.name}: ${error.message}`);
+          await this.switchToNextProvider();
+        }
       }
     });
 
     this.healthChecker.on('unhealthy', (error: Error, failureCount: number) => {
-      console.warn(`[AutoWebhook] Health check failed (${failureCount}): ${error.message}`);
+      const provider = this.getActiveProvider();
+      if (provider) {
+        console.warn(`[AutoWebhook] Health check failed for ${provider.name} (${failureCount}): ${error.message}`);
+      }
     });
   }
 
   async start(): Promise<string> {
-    if (this.ngrokProcess) {
+    const provider = this.getActiveProvider();
+    if (provider?.currentUrl) {
       console.warn('[AutoWebhook] Already running');
-      return this.currentUrl;
+      return provider.currentUrl;
     }
 
     try {
-      const url = await this.startNgrokProcess();
+      const url = await this.tryStartingProviders();
       this.startAttempts = 0;
       return url;
     } catch (error) {
+      this.emit('error', error);
       throw error;
     }
   }
 
-  private async startNgrokProcess(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const args = this.buildNgrokArgs();
-
-      console.log(`[AutoWebhook] Starting ngrok with args:`, args);
-
-      this.ngrokProcess = spawn('ngrok', args, {
-        stdio: ['ignore', 'ignore', 'pipe'], // Don't need stdout
-      });
-
-      const timeout = 30000;
-
-      // Poller to check ngrok API
-      const poller = setInterval(async () => {
-        try {
-          const tunnels = await this.checkTunnel();
-          // Find the https tunnel
-          const httpsTunnel = tunnels.find(t => t.proto === 'https');
-          if (httpsTunnel?.public_url) {
-            clearInterval(poller);
-            clearTimeout(timeoutId);
-
-            const url = httpsTunnel.public_url;
-            this.currentUrl = url;
-            this.config.onUrlChange(url);
-            this.healthChecker.start(url);
-            this.emit('ready', url);
-            console.log(`[AutoWebhook] Tunnel ready: ${url}`);
-            resolve(url);
-          }
-        } catch (e) {
-          // ngrok API not ready yet, ignore
-        }
-      }, 1000); // Poll every second
-
-      // Timeout for the whole process
-      const timeoutId = setTimeout(() => {
-        clearInterval(poller);
-        reject(new Error(`Timeout: ngrok failed to provide URL within ${timeout / 1000} seconds`));
-      }, timeout);
-
-      // --- Process event handlers ---
-
-      this.ngrokProcess.stderr?.on('data', (data: Buffer) => {
-        const error = data.toString();
-        console.error(`[AutoWebhook] ngrok stderr: ${error}`);
-        if (error.includes('failed to start tunnel')) {
-          clearInterval(poller);
-          clearTimeout(timeoutId);
-          reject(new Error(`Failed to start tunnel: ${error}`));
-        }
-      });
-
-      this.ngrokProcess.on('exit', (code: number | null) => {
-        // This will be called when the process terminates.
-        // If the promise is not resolved yet, the timeout will eventually reject it.
-        clearInterval(poller);
-        console.log(`[AutoWebhook] ngrok process exited with code ${code}`);
-        this.ngrokProcess = undefined;
-        this.healthChecker.stop();
-
-        if (!this.isRestarting && code !== 0) {
-          this.emit('error', new Error(`ngrok exited with code ${code}`));
-          this.handleUnexpectedExit().catch(console.error);
-        }
-      });
-
-      this.ngrokProcess.on('error', (error: Error) => {
-        // This is for spawn errors
-        clearInterval(poller);
-        clearTimeout(timeoutId);
-        console.error(`[AutoWebhook] ngrok process error:`, error);
-        this.config.onError(error);
-        this.emit('error', error);
-        reject(error);
-      });
-    });
+  private async tryStartingProviders(): Promise<string> {
+    if (!this.providers || this.providers.length === 0) {
+      throw new Error('No providers configured.');
+    }
+    for (let i = 0; i < this.providers.length; i++) {
+      const provider = this.getActiveProvider();
+      if (!provider) {
+        this.activeProviderIndex = (this.activeProviderIndex + 1) % this.providers.length;
+        continue;
+      }
+      try {
+        const url = await this.startProvider(provider);
+        return url;
+      } catch (error) {
+        console.error(`[AutoWebhook] Provider ${provider.name} failed to start.`, error);
+        this.activeProviderIndex = (this.activeProviderIndex + 1) % this.providers.length;
+      }
+    }
+    throw new Error('All configured providers failed to start.');
   }
 
-  private buildNgrokArgs(): string[] {
-    const args: string[] = [];
+  private async startProvider(provider: TunnelProvider): Promise<string> {
+    provider.on('exit', (code: number | null) => {
+      if (!this.isSwitching) {
+        console.log(`[AutoWebhook] ${provider.name} process exited with code ${code}`);
+        this.healthChecker.stop();
+        this.handleUnexpectedExit();
+      }
+    });
 
-    if (this.config.command) {
-      args.push(...this.config.command.split(' '));
-    } else {
-      args.push('http', this.config.port.toString());
-    }
-
-    if (this.config.region) {
-      args.push('--region', this.config.region);
-    }
-
-    if (this.config.subdomain) {
-      args.push('--subdomain', this.config.subdomain);
-    }
-
-    if (this.config.auth) {
-      args.push('--auth', this.config.auth);
-    }
-
-    return args;
+    const url = await provider.start();
+    this.config.onUrlChange?.(url);
+    this.healthChecker.start(url);
+    this.emit('ready', url);
+    return url;
   }
 
   private async handleUnexpectedExit(): Promise<void> {
+    const provider = this.getActiveProvider();
+    if (!provider) return;
+
     if (this.startAttempts < this.maxStartAttempts) {
       console.log(
-        `[AutoWebhook] Attempting to restart (attempt ${this.startAttempts + 1}/${this.maxStartAttempts})`
+        `[AutoWebhook] Attempting to restart ${provider.name} (attempt ${this.startAttempts + 1}/${this.maxStartAttempts})`
       );
       await this.restart();
     } else {
-      console.error(`[AutoWebhook] Max restart attempts reached (${this.maxStartAttempts})`);
-      this.emit('maxRestartsReached');
+      console.error(`[AutoWebhook] Max restart attempts reached for ${provider.name}. Switching to next provider.`);
+      await this.switchToNextProvider();
     }
   }
 
   async restart(): Promise<string> {
-    if (this.isRestarting) {
-      console.log('[AutoWebhook] Restart already in progress');
-      return this.currentUrl;
+    const provider = this.getActiveProvider();
+    if (!provider) {
+      throw new Error('Cannot restart, no active provider.');
     }
 
-    this.isRestarting = true;
     this.startAttempts++;
-
-    console.log('[AutoWebhook] Restarting ngrok tunnel...');
-    this.config.onRestart();
+    console.log(`[AutoWebhook] Restarting ${provider.name}...`);
+    this.config.onRestart?.();
     this.emit('restarting');
 
+    await provider.stop();
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     try {
-      await this.stop();
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const newUrl = await this.startNgrokProcess();
+      const newUrl = await this.startProvider(provider);
       this.emit('restarted', newUrl);
-
       return newUrl;
     } catch (error) {
-      console.error('[AutoWebhook] Restart failed:', error);
+      console.error(`[AutoWebhook] Restart failed for ${provider.name}:`, error);
+      console.log('[AutoWebhook] Attempting to switch to next provider.');
+      return this.switchToNextProvider();
+    }
+  }
+
+  async switchToNextProvider(): Promise<string> {
+    const currentProvider = this.getActiveProvider();
+    if (this.isSwitching || !currentProvider) {
+      return this.webhookUrl;
+    }
+    this.isSwitching = true;
+    this.startAttempts = 0;
+
+    console.log(`[AutoWebhook] Stopping ${currentProvider.name}...`);
+    await currentProvider.stop();
+    this.healthChecker.stop();
+
+    this.activeProviderIndex = (this.activeProviderIndex + 1) % this.providers.length;
+    const newProvider = this.getActiveProvider();
+
+    if (!newProvider) {
+      this.isSwitching = false;
+      throw new Error('Failed to get next provider.');
+    }
+
+    console.log(`[AutoWebhook] Switching to ${newProvider.name}...`);
+    this.config.onProviderChange?.(newProvider.name);
+    this.emit('providerChanged', newProvider.name);
+
+    try {
+      const url = await this.startProvider(newProvider);
+      this.isSwitching = false;
+      return url;
+    } catch (error) {
+      this.isSwitching = false;
+      console.error(`[AutoWebhook] Failed to switch to provider ${newProvider.name}.`, error);
+      if (this.providers.length > 1 && newProvider.name !== currentProvider.name) {
+        return this.switchToNextProvider();
+      }
       throw error;
-    } finally {
-      this.isRestarting = false;
     }
   }
 
   async stop(): Promise<void> {
     this.healthChecker.stop();
-
-    if (this.ngrokProcess) {
-      return new Promise<void>(resolve => {
-        const process = this.ngrokProcess!;
-
-        process.on('exit', () => {
-          this.ngrokProcess = undefined;
-          resolve();
-        });
-
-        process.kill('SIGTERM');
-
-        setTimeout(() => {
-          if (this.ngrokProcess) {
-            process.kill('SIGKILL');
-          }
-        }, 5000);
-      });
+    const provider = this.getActiveProvider();
+    if (provider) {
+      await provider.stop();
     }
   }
 
   get webhookUrl(): string {
-    return this.currentUrl;
+    return this.getActiveProvider()?.currentUrl || '';
   }
 
   getStatus() {
+    const provider = this.getActiveProvider();
     return {
-      isRunning: !!this.ngrokProcess,
-      currentUrl: this.currentUrl,
-      isRestarting: this.isRestarting,
+      isRunning: provider?.isRunning() || false,
+      currentUrl: this.webhookUrl,
+      activeProvider: provider?.name,
+      isSwitching: this.isSwitching,
       startAttempts: this.startAttempts,
       healthStatus: this.healthChecker.getStatus(),
     };
   }
 
-  async checkTunnel(): Promise<TunnelInfo[]> {
-    try {
-      const response: AxiosResponse<NgrokApiResponse> = await axios.get(
-        'http://localhost:4040/api/tunnels'
-      );
-      return response.data.tunnels;
-    } catch (error) {
-      throw new Error(`Failed to check ngrok API: ${error}`);
-    }
+  private getActiveProvider(): TunnelProvider | undefined {
+    return this.providers[this.activeProviderIndex];
   }
 }
