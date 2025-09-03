@@ -1,28 +1,28 @@
 # AutoWebhook Usage Examples
 
-Here you will find several examples demonstrating how to use the `AutoWebhook` library in various scenarios.
+Here you will find several examples demonstrating how to use the `AutoWebhook` library with its new multi-tunnel capabilities.
 
-## Example 1: Basic Usage
+## Example 1: Basic Usage (Single Tunnel)
 
-This example shows how to get a public URL. This is sufficient if you just need a stable address to access your local server.
+This example shows how to get a single public URL using the new configuration format.
 
 ```typescript
 // examples/basic.ts
 import { AutoWebhook } from '@rozeraf/autowebhook';
 
 async function main() {
-  // Initialize AutoWebhook, specifying the port of your local server
-  const webhook = new AutoWebhook({ port: 3000 });
+  const webhook = new AutoWebhook({
+    tunnels: [{ name: 'my-app', provider: 'ngrok', port: 3000 }]
+  });
 
   try {
-    // Start the tunnel and wait for the URL
-    const url = await webhook.start();
+    // .start() now returns an array of all tunnel URLs
+    const [url] = await webhook.start();
 
-    console.log('✨ Your persistent webhook is ready:', url);
+    if (url) {
+      console.log('✨ Your webhook is ready:', url);
+    }
     console.log('Press Ctrl+C to exit.');
-
-    // You can now use this URL to set up webhooks
-    // or to access your local application from the outside.
 
   } catch (error) { 
     console.error('Failed to start AutoWebhook:', error);
@@ -34,7 +34,7 @@ main();
 
 ## Example 2: Integration with a Telegram Bot (grammy)
 
-This is the most common use case: automatically setting up a webhook for a bot every time the application starts.
+This example shows how to set up a webhook for a bot using the new API.
 
 ```typescript
 // examples/telegram-bot.ts
@@ -47,8 +47,10 @@ const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 const PORT = 3000;
 
 async function setupBot() {
-  // 1. Initialize AutoWebhook
-  const autowebhook = new AutoWebhook({ port: PORT });
+  // 1. Initialize AutoWebhook with a single tunnel
+  const autowebhook = new AutoWebhook({
+    tunnels: [{ name: 'telegram-bot', provider: 'ngrok', port: PORT }]
+  });
 
   // 2. Create a bot instance
   const bot = new Bot(BOT_TOKEN);
@@ -58,7 +60,7 @@ async function setupBot() {
   bot.on('message', (ctx) => ctx.reply('Received your message!'));
 
   // 4. Start the tunnel and get the URL
-  const webhookUrl = await autowebhook.start();
+  const [webhookUrl] = await autowebhook.start();
   console.log(`Webhook URL: ${webhookUrl}`);
 
   // 5. Set up a web server to handle incoming updates from Telegram
@@ -76,56 +78,56 @@ async function setupBot() {
 setupBot().catch(console.error);
 ```
 
-## Example 3: Advanced Usage with Event Handling
+## Example 3: Advanced Usage with Multiple Tunnels and Events
 
-You can track the tunnel's lifecycle using events. This is useful for logging, monitoring, or performing actions when the state changes.
+This example demonstrates how to start multiple tunnels (one `ngrok` and one `localhost.run`) and listen for lifecycle events.
 
 ```typescript
-// examples/advanced.ts
+// examples/multi-tunnel.ts
 import { AutoWebhook } from '@rozeraf/autowebhook';
 
 const webhook = new AutoWebhook({
-  port: 8080,
-  region: 'eu',
+  tunnels: [
+    {
+      name: 'ngrok-main',
+      provider: 'ngrok',
+      port: 8080,
+      ngrok: { region: 'eu' } // Provider-specific config
+    },
+    {
+      name: 'lhr-backup',
+      provider: 'localhost.run',
+      port: 8080
+    }
+  ],
   healthCheck: {
     interval: 15000, // Check every 15 seconds
-    maxFailures: 2,  // Restart after 2 failures
+    maxFailures: 2,  // Restart a tunnel after 2 failures
   },
 });
 
-// Event: tunnel is ready
-webhook.on('ready', (url) => {
-  console.log(`✅ Tunnel is ready and available at: ${url}`);
+// Event: A tunnel is ready and has a public URL
+webhook.on('tunnelReady', (name, url) => {
+  console.log(`✅ Tunnel "${name}" is ready: ${url}`);
 });
 
-// Event: restart is beginning
-webhook.on('restarting', () => {
-  console.warn('⚠️ A problem was detected. Restarting the tunnel...');
+// Event: A tunnel has gone down and will be restarted
+webhook.on('tunnelDown', (name, error) => {
+  console.warn(`⚠️ Tunnel "${name}" is down and will be restarted. Reason: ${error.message}`);
 });
 
-// Event: tunnel has been successfully restarted
-webhook.on('restarted', (newUrl) => {
-  console.log(`🔄 Tunnel successfully restarted. New URL: ${newUrl}`);
-  // Here you can update the webhook URL in your service
-  // await bot.api.setWebhook(newUrl);
-});
-
-// Event: ngrok process error
+// Event: A global error occurred (e.g., failed to start all tunnels)
 webhook.on('error', (error) => {
-  console.error(`❌ A critical error occurred in the ngrok process:`, error);
-});
-
-// Event: max restart attempts reached
-webhook.on('maxRestartsReached', () => {
-  console.error('🚫 Maximum number of restart attempts has been reached. Check the logs.');
-  // You could send a notification to an administrator here
+  console.error(`❌ A critical error occurred:`, error);
 });
 
 async function run() {
   try {
-    await webhook.start();
+    const urls = await webhook.start();
+    console.log('All tunnels started and ready:', urls);
+    // You can now use the array of URLs for your load balancer or A/B tests
   } catch (err) {
-    console.error('Failed to start ngrok:', err);
+    console.error('Failed to start tunnels:', err);
   }
 }
 
