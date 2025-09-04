@@ -8,7 +8,7 @@ This example shows how to get a single public URL using the new configuration fo
 
 ```typescript
 // examples/basic.ts
-import { AutoWebhook } from '@rozeraf/autowebhook';
+import { AutoWebhook } from 'autowebhook';
 
 async function main() {
   const webhook = new AutoWebhook({
@@ -38,7 +38,7 @@ This example shows how to set up a webhook for a bot using the new API.
 
 ```typescript
 // examples/telegram-bot.ts
-import { AutoWebhook } from '@rozeraf/autowebhook';
+import { AutoWebhook } from 'autowebhook';
 import { Bot, webhookCallback } from 'grammy';
 import express from 'express';
 
@@ -84,7 +84,7 @@ This example demonstrates how to start multiple tunnels (one `ngrok` and one `lo
 
 ```typescript
 // examples/multi-tunnel.ts
-import { AutoWebhook } from '@rozeraf/autowebhook';
+import { AutoWebhook } from 'autowebhook';
 
 const webhook = new AutoWebhook({
   tunnels: [

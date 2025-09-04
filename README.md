@@ -1,6 +1,6 @@
 # AutoWebhook
 
-[![npm version](https://img.shields.io/npm/v/@rozeraf/autowebhook.svg)](https://www.npmjs.com/package/@rozeraf/autowebhook)
+[![npm version](https://img.shields.io/npm/v/autowebhook.svg)](https://www.npmjs.com/package/autowebhook)
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Powered by Bun](https://img.shields.io/badge/powered%20by-Bun-black.svg?style=flat&logo=bun)](https://bun.sh)
 
@@ -33,11 +33,11 @@ When developing services that use webhooks, you need a public HTTPS URL. Tunneli
 ## Installation
 
 ```bash
-bun add @rozeraf/autowebhook
+bun add autowebhook
 # or with npm
-npm install @rozeraf/autowebhook
+npm install autowebhook
 # or with yarn
-yarn add @rozeraf/autowebhook
+yarn add autowebhook
 ```
 
 ## Quick Start
@@ -46,7 +46,7 @@ Here's how you can get a public URL for your local server in just a few lines:
 
 ```typescript
 // index.ts
-import { AutoWebhook } from '@rozeraf/autowebhook';
+import { AutoWebhook } from 'autowebhook';
 
 // 1. Configure a tunnel
 const webhook = new AutoWebhook({
