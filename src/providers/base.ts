@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { ChildProcess } from 'child_process';
-import type { AutoWebhookConfig, ProviderName } from '../types.js';
+import type { ProviderName } from '../types.js';
 
 export abstract class TunnelProvider extends EventEmitter {
   protected process: ChildProcess | undefined;

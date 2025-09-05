@@ -1,0 +1,7 @@
+src/
+tests/
+.github/
+tsconfig.json
+*.test.ts
+.gitignore
+bun.lockb
