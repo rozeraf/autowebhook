@@ -1,10 +1,37 @@
 export type ProviderName = 'ngrok' | 'localhost.run';
 
 export interface NgrokTunnelConfig {
+  /**
+   * A raw command to execute for ngrok. Overrides other settings.
+   * @example 'http --region=eu 8080'
+   */
   command?: string;
+  /**
+   * The protocol to use for the tunnel. Can be 'http', 'tcp', or 'tls'.
+   * @default 'http'
+   */
+  proto?: 'http' | 'tcp' | 'tls';
+  /**
+   * The region to use for the tunnel.
+   */
   region?: 'us' | 'eu' | 'ap' | 'au' | 'sa' | 'jp' | 'in';
+  /**
+   * A custom subdomain for the tunnel (requires a paid ngrok plan).
+   */
   subdomain?: string;
+  /**
+   * A custom hostname for the tunnel (requires a paid ngrok plan).
+   */
+  hostname?: string;
+  /**
+   * The authentication token for your ngrok account.
+   */
   auth?: string;
+  /**
+   * A list of CIDR blocks to allow access to the tunnel.
+   * @example ['23.20.3.17/32']
+   */
+  allow_cidr?: string | string[];
 }
 
 export interface TunnelConfig {

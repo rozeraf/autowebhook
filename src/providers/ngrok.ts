@@ -23,12 +23,18 @@ export class NgrokProvider extends TunnelProvider {
       const poller = setInterval(async () => {
         try {
           const tunnels = await this.checkTunnel();
-          const httpsTunnel = tunnels.find(t => t.proto === 'https');
-          if (httpsTunnel?.public_url) {
+          const port = this.config.port || 3000;
+
+          const portTunnels = tunnels.filter(t => t.config.addr.endsWith(`:${port}`));
+          const firstTunnel = portTunnels[0];
+
+          if (firstTunnel) {
+            const httpsTunnel = portTunnels.find(t => t.proto === 'https');
+            const url = httpsTunnel?.public_url || firstTunnel.public_url;
+
             clearInterval(poller);
             clearTimeout(timeoutId);
 
-            const url = httpsTunnel.public_url;
             this.currentUrl = url;
             console.log(`[AutoWebhook] ngrok tunnel ready: ${url}`);
             resolve(url);
@@ -73,7 +79,8 @@ export class NgrokProvider extends TunnelProvider {
     if (ngrokConfig.command) {
       args.push(...ngrokConfig.command.split(' '));
     } else {
-      args.push('http', (this.config.port || 3000).toString());
+      const proto = ngrokConfig.proto || 'http';
+      args.push(proto, (this.config.port || 3000).toString());
     }
 
     if (ngrokConfig.region) {
@@ -84,8 +91,21 @@ export class NgrokProvider extends TunnelProvider {
       args.push('--subdomain', ngrokConfig.subdomain);
     }
 
+    if (ngrokConfig.hostname) {
+      args.push('--hostname', ngrokConfig.hostname);
+    }
+
     if (ngrokConfig.auth) {
       args.push('--auth', ngrokConfig.auth);
+    }
+
+    if (ngrokConfig.allow_cidr) {
+      const cidrs = Array.isArray(ngrokConfig.allow_cidr)
+        ? ngrokConfig.allow_cidr
+        : [ngrokConfig.allow_cidr];
+      for (const cidr of cidrs) {
+        args.push('--cidr-allow', cidr);
+      }
     }
 
     return args;

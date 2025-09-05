@@ -133,3 +133,42 @@ async function run() {
 
 run();
 ```
+
+## Example 4: Advanced ngrok Configuration (TCP Tunnel)
+
+This example shows how to create a TCP tunnel for services like SSH or databases, and how to restrict access using an IP whitelist.
+
+```typescript
+// examples/tcp-tunnel.ts
+import { AutoWebhook } from 'autowebhook';
+
+const webhook = new AutoWebhook({
+  tunnels: [
+    {
+      name: 'ssh-tunnel',
+      provider: 'ngrok',
+      port: 22, // Your local SSH port
+      ngrok: {
+        proto: 'tcp', // Specify TCP protocol
+        region: 'eu',
+        allow_cidr: 'YOUR_IP_ADDRESS/32', // Whitelist your IP
+      }
+    }
+  ],
+});
+
+webhook.on('tunnelReady', (name, url) => {
+  console.log(`✅ TCP Tunnel "${name}" is ready: ${url}`);
+  console.log(`You can now connect via: ssh user@${url.replace('tcp://', '')}`);
+});
+
+async function run() {
+  try {
+    await webhook.start();
+  } catch (err) {
+    console.error('Failed to start tunnels:', err);
+  }
+}
+
+run();
+```

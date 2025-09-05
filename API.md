@@ -68,7 +68,21 @@ This object defines a single tunnel to be managed by `AutoWebhook`.
 | `name`     | `string`                         | -                            | **Required**. A unique name to identify the tunnel in events and status logs.  |
 | `provider` | `'ngrok' \| 'localhost.run'`   | -                            | **Required**. The tunneling service to use.                                    |
 | `port`     | `number`                         | Inherits from global `port`  | The local port for this specific tunnel to expose.                             |
-| `ngrok`    | `NgrokTunnelConfig`              | `{}`                         | An object with ngrok-specific settings (`region`, `subdomain`, `auth`, etc.). |
+| `ngrok`    | `NgrokTunnelConfig`              | `{}`                         | An object with ngrok-specific settings. See `NgrokTunnelConfig` below. |
+
+### `NgrokTunnelConfig`
+
+This object provides detailed configuration for tunnels using `ngrok` as the provider.
+
+| Field        | Type                          | Default  | Description                                                                                                     |
+|--------------|-------------------------------|----------|-----------------------------------------------------------------------------------------------------------------|
+| `proto`      | `'http' \| 'tcp' \| 'tls'`    | `'http'` | The protocol to tunnel (`http`, `tcp`, or `tls`).                                                               |
+| `region`     | `'us' \| 'eu' \| 'ap' \| 'au' \| 'sa' \| 'jp' \| 'in'`         | -        | The ngrok datacenter region to use.                                                                             |
+| `subdomain`  | `string`                      | -        | A custom subdomain for your tunnel (requires a paid ngrok plan).                                                |
+| `hostname`   | `string`                      | -        | A custom hostname for your tunnel (requires a paid ngrok plan).                                                 |
+| `auth`       | `string`                      | -        | Your ngrok authtoken.                                                                                           |
+| `allow_cidr` | `string \| string[]`          | -        | A single CIDR or a list of CIDRs to whitelist for access to the tunnel.                                         |
+| `command`    | `string`                      | -        | A raw ngrok command string to execute. If provided, it overrides all other ngrok settings like `proto` or `port`. |
 
 ## API Methods
 
