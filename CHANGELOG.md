@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **TCP Tunnels**: Create tunnels for non-HTTP traffic (e.g., SSH, databases) using the `proto: 'tcp'` option.
   - **Custom Domains**: Support for custom hostnames with the `hostname` option (requires a paid ngrok plan).
   - **IP Whitelisting**: Restrict tunnel access to specific IP addresses using the `allow_cidr` option.
+  - **Basic Auth**: Added support for password-protecting tunnels using the `basic_auth` option.
 
 ### Fixed
 - Fixed a TypeScript error (`Object is possibly 'undefined'`) in the ngrok provider that occurred during tunnel URL retrieval.

@@ -99,6 +99,10 @@ export class NgrokProvider extends TunnelProvider {
       args.push('--auth', ngrokConfig.auth);
     }
 
+    if (ngrokConfig.basic_auth) {
+      args.push('--basic-auth', ngrokConfig.basic_auth);
+    }
+
     if (ngrokConfig.allow_cidr) {
       const cidrs = Array.isArray(ngrokConfig.allow_cidr)
         ? ngrokConfig.allow_cidr

@@ -28,6 +28,11 @@ export interface NgrokTunnelConfig {
    */
   auth?: string;
   /**
+   * Protect the tunnel with a username and password.
+   * @example 'user:password'
+   */
+  basic_auth?: string;
+  /**
    * A list of CIDR blocks to allow access to the tunnel.
    * @example ['23.20.3.17/32']
    */

@@ -81,6 +81,7 @@ This object provides detailed configuration for tunnels using `ngrok` as the pro
 | `subdomain`  | `string`                      | -        | A custom subdomain for your tunnel (requires a paid ngrok plan).                                                |
 | `hostname`   | `string`                      | -        | A custom hostname for your tunnel (requires a paid ngrok plan).                                                 |
 | `auth`       | `string`                      | -        | Your ngrok authtoken.                                                                                           |
+| `basic_auth` | `string`                      | -        | Protect the tunnel with a username and password (e.g., `'user:password'`).                                     |
 | `allow_cidr` | `string \| string[]`          | -        | A single CIDR or a list of CIDRs to whitelist for access to the tunnel.                                         |
 | `command`    | `string`                      | -        | A raw ngrok command string to execute. If provided, it overrides all other ngrok settings like `proto` or `port`. |
 
