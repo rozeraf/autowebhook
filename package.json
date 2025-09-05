@@ -1,6 +1,6 @@
 {
   "name": "autowebhook",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Automatic ngrok tunnel manager with health checking for webhooks",
   "keywords": [
     "ngrok",
