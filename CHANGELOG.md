@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.8] - 2025-09-05
+
+### Added
+- **Expanded ngrok Functionality**: Added support for more advanced ngrok features:
+  - **TCP Tunnels**: Create tunnels for non-HTTP traffic (e.g., SSH, databases) using the `proto: 'tcp'` option.
+  - **Custom Domains**: Support for custom hostnames with the `hostname` option (requires a paid ngrok plan).
+  - **IP Whitelisting**: Restrict tunnel access to specific IP addresses using the `allow_cidr` option.
+
+### Fixed
+- Fixed a TypeScript error (`Object is possibly 'undefined'`) in the ngrok provider that occurred during tunnel URL retrieval.
+
 ## [2.0.0] - 2025-09-03
 
 ### Added
