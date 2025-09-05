@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-09-05
+
+### Changed
+- **BREAKING CHANGE**: Package now publishes compiled JavaScript instead of raw TypeScript files
+- Switch moduleResolution from 'node' to 'bundler' for better compatibility with modern build tools
+- Package now includes both ESM (`index.js`) and CommonJS (`index.cjs`) builds for maximum compatibility
+- Source TypeScript files are no longer included in the npm package, only compiled output and type definitions
+- Improved CI/CD pipeline with comprehensive matrix testing and automated GitHub releases
+
+### Added
+- Dual build system supporting both ES modules and CommonJS
+- Comprehensive build scripts with separate TypeScript compilation and bundling
+- Enhanced GitHub Actions workflows with build verification and caching
+- Automated GitHub release creation with generated release notes
+- Support for npm provenance attestation for enhanced security
+
+### Fixed
+- Resolved TypeScript compilation issues with stricter compiler options
+- Fixed CI/CD pipeline failures with postpack script during dry-run publishing
+- Improved package structure to exclude development files from npm distribution
+
+## [2.2.0] - 2025-09-05
+
+### Added
+- Enhanced TypeScript configuration with stricter compiler options
+- Comprehensive CI/CD pipeline with GitHub Actions
+- Automated testing and linting in continuous integration
+- Package publishing automation with tag-based releases
+
+### Changed
+- Improved project structure and build configuration
+- Updated package metadata with repository information
+- Enhanced development scripts for better DX
+
 ## [2.1.0] - 2025-09-05
 
 ### Added
@@ -23,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multi-Tunnel Support**: Added the ability to configure and manage multiple tunnels simultaneously, enabling use cases like load balancing and A/B testing.
 
 ### Changed
-- **Configuration Update**: The configuration now accepts a `tunnels` array to define multiple tunnels. The previous `providers` array for fallback has been removed.
+- **BREAKING CHANGE**: The configuration now accepts a `tunnels` array to define multiple tunnels. The previous `providers` array for fallback has been removed.
 - **Event-Driven Architecture**: Replaced specific callbacks like `onUrlChange` and `onProviderChange` with a more flexible event-based system (`tunnelReady`, `tunnelDown`) to better handle multiple tunnels.
 
 ## [1.3.0] - 2025-09-03

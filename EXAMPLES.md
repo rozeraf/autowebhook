@@ -1,6 +1,6 @@
 # AutoWebhook Usage Examples
 
-Here you will find several examples demonstrating how to use the `AutoWebhook` library with its new multi-tunnel capabilities.
+Here you will find several examples demonstrating how to use the `AutoWebhook` library with its multi-tunnel capabilities.
 
 ## Example 1: Basic Usage (Single Tunnel)
 
@@ -171,4 +171,103 @@ async function run() {
 }
 
 run();
+```
+
+## Example 5: Using with Different Package Managers and Module Systems
+
+This example shows different ways to import and use AutoWebhook depending on your setup.
+
+```typescript
+// ESM (TypeScript/modern Node.js)
+import { AutoWebhook } from 'autowebhook';
+
+const webhook = new AutoWebhook({
+  tunnels: [{ name: 'my-app', provider: 'ngrok', port: 3000 }]
+});
+```
+
+```javascript
+// CommonJS (traditional Node.js)
+const { AutoWebhook } = require('autowebhook');
+
+const webhook = new AutoWebhook({
+  tunnels: [{ name: 'my-app', provider: 'ngrok', port: 3000 }]
+});
+```
+
+```javascript
+// With Bun
+import { AutoWebhook } from 'autowebhook';
+
+// Bun supports top-level await
+const webhook = new AutoWebhook({
+  tunnels: [{ name: 'my-app', provider: 'ngrok', port: 3000 }]
+});
+
+const [url] = await webhook.start();
+console.log(`Running at: ${url}`);
+```
+
+## Example 6: Error Handling and Graceful Shutdown
+
+This example demonstrates proper error handling and cleanup.
+
+```typescript
+// examples/error-handling.ts
+import { AutoWebhook } from 'autowebhook';
+
+const webhook = new AutoWebhook({
+  tunnels: [
+    { name: 'primary', provider: 'ngrok', port: 3000 },
+    { name: 'backup', provider: 'localhost.run', port: 3000 }
+  ],
+  healthCheck: {
+    enabled: true,
+    interval: 30000,
+    maxFailures: 3
+  }
+});
+
+// Handle individual tunnel events
+webhook.on('tunnelReady', (name, url) => {
+  console.log(`✅ Tunnel '${name}' ready: ${url}`);
+});
+
+webhook.on('tunnelDown', (name, error) => {
+  console.warn(`⚠️ Tunnel '${name}' down: ${error.message}`);
+  // You could implement fallback logic here
+});
+
+webhook.on('error', (error) => {
+  console.error('❌ AutoWebhook error:', error);
+});
+
+async function main() {
+  try {
+    const urls = await webhook.start();
+    console.log('🚀 All tunnels started:', urls);
+    
+    // Your application logic here
+    console.log('Application running... Press Ctrl+C to stop');
+    
+  } catch (error) {
+    console.error('💥 Failed to start tunnels:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  try {
+    await webhook.stop();
+    console.log('✅ All tunnels stopped');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
+});
+
+main();
 ```
