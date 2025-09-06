@@ -2,7 +2,9 @@
 
 This document provides detailed information about the configuration, methods, and events for the `AutoWebhook` library.
 
-## Installation
+---
+
+## 🚀 Installation
 
 ```bash
 npm install autowebhook
@@ -10,7 +12,11 @@ npm install autowebhook
 bun add autowebhook
 ```
 
-## Quick Start
+---
+
+## ✨ Quick Start
+
+Get your local server online in seconds.
 
 ```typescript
 import { AutoWebhook } from 'autowebhook';
@@ -23,7 +29,9 @@ const [url] = await webhook.start();
 console.log('✨ Your webhook is ready:', url);
 ```
 
-## Configuration
+---
+
+## ⚙️ Configuration
 
 You configure `AutoWebhook` by passing a configuration object to its constructor. The main component is the `tunnels` array, which defines all the tunnels you want to create.
 
@@ -72,6 +80,8 @@ console.log('Tunnels are ready:', urls);
 
 ### `AutoWebhookConfig`
 
+The main configuration object passed to the `AutoWebhook` constructor.
+
 | Field         | Type              | Default   | Description                                                                    |
 |---------------|-------------------|-----------|--------------------------------------------------------------------------------|
 | `tunnels`     | `TunnelConfig[]`  | `[]`      | **Required**. An array of tunnel configurations to create.                     |
@@ -106,7 +116,9 @@ This object provides detailed configuration for tunnels using `ngrok` as the pro
 | `allow_cidr` | `string \| string[]`          | -        | A single CIDR or a list of CIDRs to whitelist for access to the tunnel.                                         |
 | `command`    | `string`                      | -        | A raw ngrok command string to execute. If provided, it overrides all other ngrok settings like `proto` or `port`. |
 
-## API Methods
+---
+
+## 🛠️ API Methods
 
 ### `webhook.start(): Promise<string[]>`
 
@@ -149,18 +161,23 @@ const status = webhook.getStatus();
 console.log('Tunnel status:', JSON.stringify(status, null, 2));
 ```
 
-## Events
+---
 
-The `AutoWebhook` instance is an `EventEmitter` and emits the following events to allow you to react to the lifecycle of each tunnel:
+## 🔔 Events
 
-### `tunnelReady (name: string, url: string)`
-Emitted when a tunnel is successfully started and its public URL is retrieved.
+The `AutoWebhook` instance is an `EventEmitter` and emits the following events to allow you to react to the lifecycle of each tunnel.
 
-### `tunnelDown (name: string, error: Error)`
-Emitted when a tunnel fails its health check and is about to be restarted.
+### `tunnelReady`
+- **Arguments**: `(name: string, url: string)`
+- **Description**: Emitted when a tunnel is successfully started and its public URL is retrieved.
 
-### `error (error: Error)`
-Emitted when a global error occurs that isn't specific to one tunnel (e.g., failure to start all tunnels).
+### `tunnelDown`
+- **Arguments**: `(name: string, error: Error)`
+- **Description**: Emitted when a tunnel fails its health check and is about to be restarted.
+
+### `error`
+- **Arguments**: `(error: Error)`
+- **Description**: Emitted when a global error occurs that isn't specific to one tunnel (e.g., failure to start all tunnels).
 
 **Example usage:**
 ```typescript
@@ -177,7 +194,9 @@ webhook.on('error', (error) => {
 });
 ```
 
-## TypeScript Support
+---
+
+## 🔷 TypeScript Support
 
 AutoWebhook v3.0+ includes full TypeScript definitions out of the box. All configuration objects and method return types are properly typed.
 
@@ -195,13 +214,15 @@ const config: AutoWebhookConfig = {
 };
 ```
 
-## Migration from v2.x
+---
+
+## 🔄 Migration from v2.x
 
 ### Breaking Changes in v3.0
 
-1. **Package format changed**: Now published as compiled JavaScript with TypeScript definitions
-2. **Dual module support**: Both ESM and CommonJS are supported
-3. **Import path remains the same**: `import { AutoWebhook } from 'autowebhook'`
+1. **Package format changed**: Now published as compiled JavaScript with TypeScript definitions.
+2. **Dual module support**: Both ESM and CommonJS are supported.
+3. **Import path remains the same**: `import { AutoWebhook } from 'autowebhook'`.
 
 ### No code changes required
 
