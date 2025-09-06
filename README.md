@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/autowebhook.svg)](https://www.npmjs.com/package/autowebhook)
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Powered by Bun](https://img.shields.io/badge/powered%20by-Bun-black.svg?style=flat&logo=bun)](https://bun.sh)
-[![CI](https://github.com/rozeraf/autowebhook/actions/workflows/ci.yml/badge.svg)](https://github.com/rozeraf/autowebhook/actions/workflows/ci.yml)
+[![GitHub](https://img.shields.io/badge/GitHub-autowebhook-blue?logo=github)](https://github.com/rozeraf/autowebhook)
 
 **AutoWebhook** is a library for Node.js and Bun that automatically creates and manages tunnels using services like [ngrok](https://ngrok.com/) and [localhost.run](https://localhost.run). It provides stable public URLs for your local server, which is ideal for developing and testing webhooks.
 
