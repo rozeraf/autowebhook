@@ -27,6 +27,8 @@ dist/
 node_modules/
 .env
 
+.husky
+
 # nyc test coverage
 .nyc_output
 
