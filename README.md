@@ -1,25 +1,54 @@
+
 # AutoWebhook
+
+> Effortlessly manage public tunnels for local webhooks with automatic monitoring and multi-provider support.
 
 [![npm version](https://img.shields.io/npm/v/autowebhook.svg)](https://www.npmjs.com/package/autowebhook)
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Powered by Bun](https://img.shields.io/badge/powered%20by-Bun-black.svg?style=flat&logo=bun)](https://bun.sh)
 [![GitHub](https://img.shields.io/badge/GitHub-autowebhook-blue?logo=github)](https://github.com/rozeraf/autowebhook)
 
-**AutoWebhook** is a library for Node.js and Bun that automatically creates and manages tunnels using services like [ngrok](https://ngrok.com/) and [localhost.run](https://localhost.run). It provides stable public URLs for your local server, which is ideal for developing and testing webhooks.
+
+---
+
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Why AutoWebhook](#why-autowebhook)
+- [Core Features](#core-features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Requirements](#requirements)
+- [Documentation](#documentation)
+- [Package Contents](#package-contents)
+- [Development](#development)
+- [Changelog](#changelog)
+- [License](#license)
+- [Contributing](#contributing)
+
+---
+
+## Overview
+
+**AutoWebhook** is a library for Node.js and Bun that automatically creates and manages tunnels using services like [ngrok](https://ngrok.com/) and [localhost.run](https://localhost.run). It provides stable public URLs for your local server, making it ideal for developing and testing webhooks.
 
 The library runs your chosen tunnel provider in the background, monitors its status, automatically restarts it in case of failures, and provides a simple API to manage one or multiple tunnels simultaneously.
 
-## Why AutoWebhook?
 
-When developing services that use webhooks, you need a public HTTPS URL. Tunneling services are excellent for this, but often require manual startup and management.
 
-**AutoWebhook** automates this entire process:
+## Why AutoWebhook
 
-- **Automatic Start**: Runs tunnel providers alongside your application.
-- **Multi-Provider**: Supports `ngrok` and `localhost.run` out of the box.
-- **Multi-Tunnel**: Run and manage multiple tunnels at the same time.
-- **Monitoring and Restart**: A built-in health checker monitors each tunnel and automatically restarts it on failure.
-- **Simplicity**: Eliminates the need for manual steps and extra scripts.
+When developing services that use webhooks, you need a public HTTPS URL. Tunneling services are great for this, but they often require manual startup, monitoring, and restarting.
+
+**AutoWebhook** removes all the manual hassle:
+
+- **Zero manual steps**: Tunnels start and restart automatically with your app.
+- **Multi-provider**: Use `ngrok`, `localhost.run`, or both for redundancy.
+- **Multi-tunnel**: Manage several tunnels at once for advanced workflows.
+- **Automatic monitoring**: Built-in health checks and auto-restart on failure.
+- **Simple API**: One config, one method call, and you’re ready.
+
 
 ## Core Features
 
@@ -32,6 +61,7 @@ When developing services that use webhooks, you need a public HTTPS URL. Tunneli
 - **Event-driven Architecture**: Get real-time notifications for each tunnel's status.
 - **TypeScript Support**: Fully typed for robust development.
 
+
 ## Installation
 
 ```bash
@@ -41,6 +71,7 @@ bun add autowebhook
 # or with yarn
 yarn add autowebhook
 ```
+
 
 ## Quick Start
 
@@ -64,6 +95,7 @@ console.log(`App running at: ${url}`);
 // ...
 ```
 
+
 ## Requirements
 
 - **Node.js**: >= 18.0.0
@@ -72,11 +104,14 @@ console.log(`App running at: ${url}`);
 
 For `ngrok` tunnels, you may need to install ngrok separately or provide an auth token for advanced features.
 
+
 ## Documentation
 
-For detailed configuration, API methods, and events, see the **[API Reference](./API.md)**.
 
-For more complex use cases, including how to set up a Telegram bot or manage multiple tunnels, see the **[Usage Examples](./EXAMPLES.md)**.
+For detailed configuration, API methods, and events, see the [API Reference](./API.md).
+
+For more complex use cases, including how to set up a Telegram bot or manage multiple tunnels, see the [Usage Examples](./EXAMPLES.md).
+
 
 ## Package Contents
 
@@ -95,6 +130,7 @@ import { AutoWebhook } from 'autowebhook';
 // CommonJS
 const { AutoWebhook } = require('autowebhook');
 ```
+
 
 ## Development
 
@@ -115,10 +151,19 @@ bun run build
 bun run lint
 ```
 
+
 ## Changelog
 
 All changes are documented in the [CHANGELOG.md](./CHANGELOG.md) file.
 
+
 ## License
 
 This project is distributed under the GPL-3.0-only license. See the [LICENSE](./LICENSE) file for more information.
+
+---
+
+
+## Contributing
+
+Contributions, bug reports, and feature requests are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/rozeraf/autowebhook).
