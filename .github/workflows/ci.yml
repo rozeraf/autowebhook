@@ -1,3 +1,19 @@
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Print Bun, Node, and OS info
+        run: |
+          bun --version
+          node --version
+          uname -a
+          printenv | sort
+
+      - name: List installed files for debug
+        run: |
+          ls -la
+          ls -la node_modules || true
+          ls -la ~/.bun || true
+          cat bun.lockb || true
 name: CI
 
 on:
