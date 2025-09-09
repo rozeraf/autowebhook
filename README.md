@@ -66,7 +66,7 @@ When developing services that use webhooks, you need a public HTTPS URL. Tunneli
 
 ## Installation
 
-It is recommended to use AutoWebhook with [Bun](https://bun.sh/) — it is faster and easier than npm/yarn. Below are the instructions for all operating systems.
+It is recommended to use AutoWebhook with [Bun](https://bun.sh/) — it's faster and easier than npm/yarn. Below are the instructions for all operating systems.
 
 <details>
 <summary><strong>macOS</strong></summary>
