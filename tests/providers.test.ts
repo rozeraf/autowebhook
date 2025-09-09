@@ -8,7 +8,7 @@ interface MockProcess extends EventEmitter {
   kill: () => void;
 }
 
-// Глобальные моки
+// Глобальные моки для child_process и axios
 const mockSpawn = mock((command: string, args: string[], options: any) => {
   const proc = new EventEmitter() as MockProcess;
   proc.stdout = new EventEmitter();
@@ -23,8 +23,11 @@ const mockSpawn = mock((command: string, args: string[], options: any) => {
       // Для ngrok эмитируем событие spawn, но данные получаем через API
       proc.emit('spawn');
     } else if (command === 'ssh' && args.includes('ssh.localhost.run')) {
-      // Для localhost.run эмитируем URL в stdout
-      proc.stdout.emit('data', Buffer.from('Connect to https://test.lhr.run\n'));
+      // Для localhost.run эмитируем URL в stdout с правильным форматом
+      proc.stdout.emit(
+        'data',
+        Buffer.from('Connect to https://test.lhr.run or https://test.localhost.run\n')
+      );
     }
   }, 10);
 
@@ -77,7 +80,7 @@ describe('Providers', () => {
 
         const url = await provider.start();
 
-        // Проверяем только результат, не внутренние вызовы
+        // Проверяем результат
         expect(url).toBe('https://ngrok.test');
         expect(typeof url).toBe('string');
         expect(url.startsWith('https://')).toBe(true);
@@ -101,7 +104,7 @@ describe('Providers', () => {
 
         const url = await provider.start();
 
-        // Проверяем только результат, не внутренние вызовы
+        // Проверяем результат - исправляем ожидаемый URL
         expect(url).toBe('https://test.lhr.run');
         expect(typeof url).toBe('string');
         expect(url.startsWith('https://')).toBe(true);
