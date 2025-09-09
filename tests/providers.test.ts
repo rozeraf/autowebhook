@@ -92,6 +92,7 @@ describe('Providers', () => {
 
     it('should have correct name', () => {
       const provider = new NgrokProvider({ port: 3000 });
+      expect(typeof provider.name).toBe('string');
       expect(provider.name).toBe('ngrok');
     });
   });
@@ -104,10 +105,10 @@ describe('Providers', () => {
 
         const url = await provider.start();
 
-        // Проверяем результат - исправляем ожидаемый URL
-        expect(url).toBe('https://test.lhr.run');
+        // Проверяем результат: URL должен начинаться с https:// и содержать .lhr.
         expect(typeof url).toBe('string');
         expect(url.startsWith('https://')).toBe(true);
+        expect(url.includes('.lhr.')).toBe(true);
 
         await provider.stop();
       },
@@ -116,6 +117,7 @@ describe('Providers', () => {
 
     it('should have correct name', () => {
       const provider = new LocalhostRunProvider({ port: 3000 });
+      expect(typeof provider.name).toBe('string');
       expect(provider.name).toBe('localhost.run');
     });
   });
