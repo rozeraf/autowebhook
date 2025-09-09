@@ -10,6 +10,7 @@ export abstract class TunnelProvider extends EventEmitter {
   }
 
   abstract start(): Promise<string>;
+
   abstract get name(): string;
 
   public isRunning(): boolean {

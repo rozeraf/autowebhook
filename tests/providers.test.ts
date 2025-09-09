@@ -92,8 +92,9 @@ describe('Providers', () => {
 
     it('should have correct name', () => {
       const provider = new NgrokProvider({ port: 3000 });
-      expect(typeof provider.name).toBe('string');
-      expect(provider.name).toBe('ngrok');
+      const name = provider.name;
+      expect(typeof name).toBe('string');
+      expect(name).toBe('ngrok');
     });
   });
 
@@ -102,23 +103,22 @@ describe('Providers', () => {
       'should start and resolve with a URL',
       async () => {
         const provider = new LocalhostRunProvider({ port: 3000 });
-
         const url = await provider.start();
 
-        // Проверяем результат: URL должен начинаться с https:// и содержать .lhr.
         expect(typeof url).toBe('string');
         expect(url.startsWith('https://')).toBe(true);
         expect(url.includes('.lhr.')).toBe(true);
 
         await provider.stop();
       },
-      { timeout: 10000 }
+      { timeout: 30000 }
     );
 
     it('should have correct name', () => {
       const provider = new LocalhostRunProvider({ port: 3000 });
-      expect(typeof provider.name).toBe('string');
-      expect(provider.name).toBe('localhost.run');
+      const name = provider.name;
+      expect(typeof name).toBe('string');
+      expect(name).toBe('localhost.run');
     });
   });
 });
