@@ -66,25 +66,25 @@ When developing services that use webhooks, you need a public HTTPS URL. Tunneli
 
 ## Installation
 
-AutoWebhook рекомендуется использовать с [Bun](https://bun.sh/) — это быстрее и проще, чем npm/yarn. Ниже приведены инструкции для всех ОС.
+It is recommended to use AutoWebhook with [Bun](https://bun.sh/) — it is faster and easier than npm/yarn. Below are the instructions for all operating systems.
 
 <details>
 <summary><strong>macOS</strong></summary>
 
-**1. Установите Bun:**
+**1. Install Bun:**
 
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
-**2. Установите AutoWebhook:**
+**2. Install AutoWebhook:**
 
 ```bash
 bun add autowebhook
 ```
 
 <details>
-<summary>Альтернатива: через npm</summary>
+<summary>Alternative: via npm</summary>
 
 ```bash
 brew install node
@@ -97,20 +97,20 @@ npm install autowebhook
 <details>
 <summary><strong>Windows</strong></summary>
 
-**1. Установите Bun:**
+**1. Install Bun:**
 
-- Скачайте и запустите установщик с [bun.sh](https://bun.sh/)
+- Download and run the installer from [bun.sh](https://bun.sh/)
 
-**2. Установите AutoWebhook:**
+**2. Install AutoWebhook:**
 
 ```powershell
 bun add autowebhook
 ```
 
 <details>
-<summary>Альтернатива: через npm</summary>
+<summary>Alternative: via npm</summary>
 
-Скачайте Node.js с [nodejs.org](https://nodejs.org/)
+Download Node.js from [nodejs.org](https://nodejs.org/)
 
 ```powershell
 npm install autowebhook
@@ -122,20 +122,20 @@ npm install autowebhook
 <details>
 <summary><strong>Linux (Debian/Ubuntu, Arch, Fedora)</strong></summary>
 
-**1. Установите Bun:**
+**1. Install Bun:**
 
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
-**2. Установите AutoWebhook:**
+**2. Install AutoWebhook:**
 
 ```bash
 bun add autowebhook
 ```
 
 <details>
-<summary>Альтернатива: через npm</summary>
+<summary>Alternative: via npm</summary>
 
 - <details>
   <summary>Debian/Ubuntu</summary>
@@ -172,7 +172,7 @@ bun add autowebhook
 
 ## Quick Start
 
-Рекомендуемый способ — запуск через Bun:
+The recommended way is to run it with Bun:
 
 ```typescript
 // index.ts
@@ -184,30 +184,30 @@ const webhook = new AutoWebhook({
 
 const [url] = await webhook.start();
 console.log(`App running at: ${url}`);
-// ...ваш сервер на 3000 порту
+// ...your server on port 3000
 ```
 
 <details>
-<summary><strong>Как запустить</strong></summary>
+<summary><strong>How to run</strong></summary>
 
-**С помощью Bun:**
+**With Bun:**
 
 ```bash
 bun run index.ts
 ```
 
 <details>
-<summary>Через npm (альтернатива)</summary>
+<summary>Via npm (alternative)</summary>
 
 ```bash
 npx tsx index.ts
-# или
+# or
 npm run start
 ```
 </details>
 
 <details>
-<summary>Через node (после компиляции в JS)</summary>
+<summary>Via node (after compiling to JS)</summary>
 
 ```bash
 tsc index.ts
