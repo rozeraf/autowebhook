@@ -163,7 +163,7 @@ export class AutoWebhook extends EventEmitter {
 
   getStatus() {
     const tunnelsStatus: { [key: string]: any } = {};
-    for (const [name, tunnel] of this.tunnels.entries()) {
+    this.tunnels.forEach((tunnel, name) => {
       tunnelsStatus[name] = {
         isRunning: tunnel.provider.isRunning(),
         url: tunnel.url,
@@ -171,7 +171,7 @@ export class AutoWebhook extends EventEmitter {
         startAttempts: tunnel.startAttempts,
         health: tunnel.healthChecker.getStatus(),
       };
-    }
+    });
     return {
       tunnels: tunnelsStatus,
     };

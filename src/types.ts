@@ -51,10 +51,10 @@ export interface AutoWebhookConfig {
   port?: number; // Default port for all tunnels if not specified individually
   expanded?: boolean;
   healthCheck?: {
-    enabled: boolean;
-    interval: number;
-    timeout: number;
-    maxFailures: number;
+    enabled?: boolean;
+    interval?: number;
+    timeout?: number;
+    maxFailures?: number;
   };
   onError?: (error: Error) => void; // For global errors
 }
