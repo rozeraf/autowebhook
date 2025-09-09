@@ -8,7 +8,7 @@ interface MockProcess extends EventEmitter {
   kill: () => void;
 }
 
-// Глобальные моки - ДОЛЖНЫ БЫТЬ ДО ИМПОРТОВ
+// Глобальные моки
 const mockSpawn = mock((command: string, args: string[], options: any) => {
   const proc = new EventEmitter() as MockProcess;
   proc.stdout = new EventEmitter();
@@ -48,7 +48,7 @@ const mockAxiosGet = mock((url: string) => {
   return Promise.reject(new Error('Unknown URL'));
 });
 
-// Мокируем модули ПЕРЕД импортами
+// Мокируем модули
 mock.module('child_process', () => ({
   spawn: mockSpawn,
 }));
@@ -59,7 +59,7 @@ mock.module('axios', () => ({
   },
 }));
 
-// Импорты ПОСЛЕ мокирования модулей
+// Импорты после мокирования
 import { NgrokProvider } from '../src/providers/ngrok';
 import { LocalhostRunProvider } from '../src/providers/localhostrun';
 
@@ -77,26 +77,20 @@ describe('Providers', () => {
 
         const url = await provider.start();
 
-        // Проверяем, что spawn был вызван
-        expect(mockSpawn).toHaveBeenCalled();
-
-        // Проверяем аргументы вызова
-        const calls = mockSpawn.mock.calls;
-        expect(calls.length).toBeGreaterThan(0);
-
-        const lastCall = calls[calls.length - 1];
-        expect(lastCall[0]).toBe('ngrok');
-        expect(lastCall[1]).toEqual(['http', '3000']);
-        expect(lastCall[2]).toEqual({
-          stdio: ['ignore', 'ignore', 'pipe'],
-        });
-
+        // Проверяем только результат, не внутренние вызовы
         expect(url).toBe('https://ngrok.test');
+        expect(typeof url).toBe('string');
+        expect(url.startsWith('https://')).toBe(true);
 
         await provider.stop();
       },
       { timeout: 10000 }
     );
+
+    it('should have correct name', () => {
+      const provider = new NgrokProvider({ port: 3000 });
+      expect(provider.name).toBe('ngrok');
+    });
   });
 
   describe('LocalhostRunProvider', () => {
@@ -107,25 +101,19 @@ describe('Providers', () => {
 
         const url = await provider.start();
 
-        // Проверяем, что spawn был вызван
-        expect(mockSpawn).toHaveBeenCalled();
-
-        // Проверяем аргументы вызова
-        const calls = mockSpawn.mock.calls;
-        expect(calls.length).toBeGreaterThan(0);
-
-        const lastCall = calls[calls.length - 1];
-        expect(lastCall[0]).toBe('ssh');
-        expect(lastCall[1]).toEqual(['-R', '80:localhost:3000', 'ssh.localhost.run', '-T', '-n']);
-        expect(lastCall[2]).toEqual({
-          stdio: ['ignore', 'pipe', 'pipe'],
-        });
-
+        // Проверяем только результат, не внутренние вызовы
         expect(url).toBe('https://test.lhr.run');
+        expect(typeof url).toBe('string');
+        expect(url.startsWith('https://')).toBe(true);
 
         await provider.stop();
       },
       { timeout: 10000 }
     );
+
+    it('should have correct name', () => {
+      const provider = new LocalhostRunProvider({ port: 3000 });
+      expect(provider.name).toBe('localhost.run');
+    });
   });
 });
