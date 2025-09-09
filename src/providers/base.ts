@@ -5,18 +5,21 @@ export abstract class TunnelProvider extends EventEmitter {
   protected process: ChildProcess | undefined;
   public currentUrl = '';
 
+  protected _name: string = '';
+
   constructor(protected config: any) {
     super();
   }
 
   abstract start(): Promise<string>;
 
-  abstract get name(): string;
+  get name(): string {
+    return this._name;
+  }
 
   public isRunning(): boolean {
     return !!this.process;
   }
-
   async stop(): Promise<void> {
     if (this.process) {
       return new Promise<void>(resolve => {

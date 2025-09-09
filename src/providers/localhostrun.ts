@@ -2,8 +2,9 @@ import { spawn } from 'child_process';
 import { TunnelProvider } from './base.js';
 
 export class LocalhostRunProvider extends TunnelProvider {
-  get name(): string {
-    return 'localhost.run';
+  constructor(config: any) {
+    super(config);
+    this._name = 'localhost.run';
   }
 
   async start(): Promise<string> {

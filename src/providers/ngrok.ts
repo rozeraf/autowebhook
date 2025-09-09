@@ -4,8 +4,9 @@ import { TunnelProvider } from './base.js';
 import type { NgrokApiResponse, TunnelInfo } from '../types.js';
 
 export class NgrokProvider extends TunnelProvider {
-  get name(): string {
-    return 'ngrok';
+  constructor(config: any) {
+    super(config);
+    this._name = 'ngrok';
   }
 
   async start(): Promise<string> {
