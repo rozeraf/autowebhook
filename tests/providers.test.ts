@@ -12,63 +12,61 @@ interface MockProcess extends EventEmitter {
   kill: () => void;
 }
 
-// Глобальный мок для spawn с правильной эмуляцией процессов
-let lastMockProcess: MockProcess | null = null;
+// Глобальные моки с правильной настройкой
+const mockSpawn = mock((command: string, args: string[], options: any) => {
+  const proc = new EventEmitter() as MockProcess;
+  proc.stdout = new EventEmitter();
+  proc.stderr = new EventEmitter();
+  proc.kill = mock(() => {
+    proc.emit('exit', 0);
+  });
 
-mock.module('child_process', () => ({
-  spawn: mock((command: string, args: string[]) => {
-    const proc = new EventEmitter() as MockProcess;
-    proc.stdout = new EventEmitter();
-    proc.stderr = new EventEmitter();
-    proc.kill = mock(() => {
-      proc.emit('exit', 0);
+  // Эмулируем различное поведение для разных команд
+  setTimeout(() => {
+    if (command === 'ngrok') {
+      // Для ngrok эмитируем событие spawn, но данные получаем через API
+      proc.emit('spawn');
+    } else if (command === 'ssh' && args.includes('ssh.localhost.run')) {
+      // Для localhost.run эмитируем URL в stdout
+      proc.stdout.emit('data', Buffer.from('Connect to https://test.lhr.run\n'));
+    }
+  }, 10);
+
+  return proc;
+});
+
+const mockAxiosGet = mock((url: string) => {
+  if (url === 'http://localhost:4040/api/tunnels') {
+    return Promise.resolve({
+      data: {
+        tunnels: [
+          {
+            proto: 'https',
+            public_url: 'https://ngrok.test',
+            config: { addr: 'http://localhost:3000' },
+          },
+        ],
+      },
     });
+  }
+  return Promise.reject(new Error('Unknown URL'));
+});
 
-    lastMockProcess = proc;
-
-    // Эмулируем различное поведение для разных команд
-    setTimeout(() => {
-      if (command === 'ngrok') {
-        // Для ngrok не эмитируем данные в stdout/stderr,
-        // так как он работает через API
-        proc.emit('spawn');
-      } else if (command === 'ssh' && args.includes('ssh.localhost.run')) {
-        // Для localhost.run эмитируем URL в stdout
-        proc.stdout.emit('data', Buffer.from('Connect to https://test.lhr.run'));
-      }
-    }, 10);
-
-    return proc;
-  }),
+// Мокируем модули
+mock.module('child_process', () => ({
+  spawn: mockSpawn,
 }));
 
-// Мок для axios с правильным ответом для ngrok API
 mock.module('axios', () => ({
   default: {
-    get: mock((url: string) => {
-      if (url === 'http://localhost:4040/api/tunnels') {
-        return Promise.resolve({
-          data: {
-            tunnels: [
-              {
-                proto: 'https',
-                public_url: 'https://ngrok.test',
-                config: { addr: 'http://localhost:3000' },
-              },
-            ],
-          },
-        });
-      }
-      return Promise.reject(new Error('Unknown URL'));
-    }),
+    get: mockAxiosGet,
   },
 }));
 
 describe('Providers', () => {
   beforeEach(() => {
-    (spawn as any).mockClear();
-    (axios.get as any).mockClear();
-    lastMockProcess = null;
+    mockSpawn.mockClear();
+    mockAxiosGet.mockClear();
   });
 
   describe('NgrokProvider', () => {
@@ -77,14 +75,19 @@ describe('Providers', () => {
       async () => {
         const provider = new NgrokProvider({ port: 3000 });
 
-        // Запускаем провайдер
         const urlPromise = provider.start();
 
         // Ждём немного, чтобы процесс успел запуститься
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Проверяем, что spawn был вызван с правильными аргументами
-        expect(spawn).toHaveBeenCalledWith('ngrok', ['http', '3000'], {
+        // Проверяем, что spawn был вызван
+        expect(mockSpawn).toHaveBeenCalled();
+
+        // Проверяем аргументы вызова
+        const lastCall = mockSpawn.mock.calls[mockSpawn.mock.calls.length - 1];
+        expect(lastCall[0]).toBe('ngrok');
+        expect(lastCall[1]).toEqual(['http', '3000']);
+        expect(lastCall[2]).toEqual({
           stdio: ['ignore', 'ignore', 'pipe'],
         });
 
@@ -106,15 +109,18 @@ describe('Providers', () => {
         const urlPromise = provider.start();
 
         // Ждём, чтобы start() успел подписаться на stdout
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        expect(spawn).toHaveBeenCalledWith(
-          'ssh',
-          ['-R', '80:localhost:3000', 'ssh.localhost.run', '-T', '-n'],
-          {
-            stdio: ['ignore', 'pipe', 'pipe'],
-          }
-        );
+        // Проверяем, что spawn был вызван
+        expect(mockSpawn).toHaveBeenCalled();
+
+        // Проверяем аргументы вызова
+        const lastCall = mockSpawn.mock.calls[mockSpawn.mock.calls.length - 1];
+        expect(lastCall[0]).toBe('ssh');
+        expect(lastCall[1]).toEqual(['-R', '80:localhost:3000', 'ssh.localhost.run', '-T', '-n']);
+        expect(lastCall[2]).toEqual({
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
 
         const url = await urlPromise;
         expect(url).toBe('https://test.lhr.run');
