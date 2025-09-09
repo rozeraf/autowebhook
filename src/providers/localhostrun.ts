@@ -7,6 +7,10 @@ export class LocalhostRunProvider extends TunnelProvider {
     this._name = 'localhost.run';
   }
 
+  get name(): string {
+    return this._name;
+  }
+
   async start(): Promise<string> {
     return new Promise((resolve, reject) => {
       const port = this.config.port || 3000;

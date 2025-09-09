@@ -2,15 +2,17 @@ import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 import axios from 'axios';
 import { HealthChecker } from '../src/health-checker';
 
+const mockAxiosGet = mock(() => Promise.resolve());
+
 mock.module('axios', () => ({
   default: {
-    get: mock(() => Promise.resolve()),
+    get: mockAxiosGet,
   },
 }));
 
 describe('HealthChecker', () => {
   beforeEach(() => {
-    (axios.get as any).mockClear();
+    mockAxiosGet.mockClear();
   });
 
   it('should not start if disabled', () => {

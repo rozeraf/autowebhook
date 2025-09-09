@@ -9,6 +9,10 @@ export class NgrokProvider extends TunnelProvider {
     this._name = 'ngrok';
   }
 
+  get name(): string {
+    return this._name;
+  }
+
   async start(): Promise<string> {
     return new Promise((resolve, reject) => {
       const args = this.buildNgrokArgs();
