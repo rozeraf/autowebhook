@@ -1,6 +1,6 @@
 // Class exports
 export { AutoWebhook } from './autowebhook.js';
-export { NgrokHealthChecker } from './health-checker.js';
+export { HealthChecker } from './health-checker.js';
 
 // Type exports
 export type { AutoWebhookConfig, TunnelInfo, NgrokApiResponse, HealthStatus } from './types.js';

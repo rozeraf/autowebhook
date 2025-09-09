@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
-import axios, { AxiosResponse } from 'axios';
-import type { AutoWebhookConfig, NgrokApiResponse, TunnelInfo, HealthStatus } from './types.js';
+import axios from 'axios';
+import type { AutoWebhookConfig, HealthStatus } from './types.js';
 
-export class NgrokHealthChecker extends EventEmitter {
+export class HealthChecker extends EventEmitter {
   private checkInterval: NodeJS.Timeout | undefined;
   private failureCount = 0;
   private readonly config: Required<NonNullable<AutoWebhookConfig['healthCheck']>>;
@@ -53,31 +53,10 @@ export class NgrokHealthChecker extends EventEmitter {
     }
 
     try {
-      const apiStartTime = Date.now();
-      const apiResponse: AxiosResponse<NgrokApiResponse> = await axios.get(
-        'http://localhost:4040/api/tunnels',
-        {
-          timeout: this.config.timeout,
-        }
-      );
-      const apiPingTime = Date.now() - apiStartTime;
-
-      const tunnels: TunnelInfo[] = apiResponse.data.tunnels;
-      const activeTunnel = tunnels.find(t => t.public_url === currentUrl);
-
-      if (!activeTunnel) {
-        throw new Error('Active tunnel not found in ngrok API');
-      }
-
-      if (this.expanded) {
-        console.log(`[AutoWebhook] ngrok API check successful (${apiPingTime}ms). Tunnel found.`);
-        console.log(`[AutoWebhook] Pinging public URL: ${currentUrl}`);
-      }
-
       const publicUrlStartTime = Date.now();
       await axios.get(currentUrl, {
         timeout: this.config.timeout,
-        validateStatus: () => true,
+        validateStatus: status => status >= 200 && status < 500, // Don't fail on 4xx client errors
       });
       const publicUrlPingTime = Date.now() - publicUrlStartTime;
 

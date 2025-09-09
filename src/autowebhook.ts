@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { NgrokHealthChecker } from './health-checker.js';
+import { HealthChecker } from './health-checker.js';
 import { TunnelProvider } from './providers/base.js';
 import { NgrokProvider } from './providers/ngrok.js';
 import { LocalhostRunProvider } from './providers/localhostrun.js';
@@ -8,7 +8,7 @@ import type { AutoWebhookConfig, TunnelConfig } from './types.js';
 interface ManagedTunnel {
   config: TunnelConfig;
   provider: TunnelProvider;
-  healthChecker: NgrokHealthChecker;
+  healthChecker: HealthChecker;
   url: string;
   startAttempts: number;
 }
@@ -58,7 +58,7 @@ export class AutoWebhook extends EventEmitter {
     const provider = this.createProvider(tunnelConfig);
     const url = await provider.start();
 
-    const healthChecker = new NgrokHealthChecker(this.config.healthCheck, this.config.expanded);
+    const healthChecker = new HealthChecker(this.config.healthCheck, this.config.expanded);
     healthChecker.start(url);
 
     healthChecker.on('critical', async (error: Error) => {
