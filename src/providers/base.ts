@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { ChildProcess } from 'child_process';
-import type { ProviderName } from '../types.js';
 
 export abstract class TunnelProvider extends EventEmitter {
   protected process: ChildProcess | undefined;
@@ -11,7 +10,7 @@ export abstract class TunnelProvider extends EventEmitter {
   }
 
   abstract start(): Promise<string>;
-  abstract get name(): ProviderName;
+  abstract get name(): string;
 
   public isRunning(): boolean {
     return !!this.process;
