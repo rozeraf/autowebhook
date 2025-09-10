@@ -73,7 +73,7 @@
     "release:minor": "npm version minor && git push --follow-tags",
     "release:major": "npm version major && git push --follow-tags",
     "prepare": "husky install",
-    "pre-commit-check": "bun run lint && bun run format:check && bun run test && bun run build"
+    "pre-commit-check": "bun run lint && bun run format && bun run test && bun run build"
   },
   "dependencies": {
     "axios": "^1.7.0"
