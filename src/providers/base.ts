@@ -8,6 +8,9 @@ export abstract class TunnelProvider extends EventEmitter {
 
   constructor(protected config: any) {
     super();
+    if (new.target === TunnelProvider) {
+      throw new Error('Cannot instantiate abstract class TunnelProvider directly');
+    }
     this._name = '';
   }
 
