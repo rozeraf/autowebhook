@@ -4,11 +4,11 @@ import { ChildProcess } from 'child_process';
 export abstract class TunnelProvider extends EventEmitter {
   protected process: ChildProcess | undefined;
   public currentUrl = '';
-
-  protected _name: string = '';
+  protected _name: string;
 
   constructor(protected config: any) {
     super();
+    this._name = '';
   }
 
   abstract start(): Promise<string>;
