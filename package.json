@@ -56,7 +56,7 @@
     "build": "bun run build:clean && bun run build:types && bun run build:esm && bun run build:cjs",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
     "build:esm": "bun build src/index.ts --outdir dist --target node --format esm --outfile index.js",
-    "build:cjs": "bun build src/index.ts --outdir dist --target node --format cjs --outfile index.cjs",
+    "build:cjs": "echo \"export const require = (await import(\\\"./index.js\\\")).default;\" > dist/index.cjs",
     "build:clean": "rm -rf dist",
     "start": "bun run src/index.ts",
     "dev": "bun --watch run examples/basic.ts",
