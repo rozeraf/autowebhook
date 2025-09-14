@@ -24,7 +24,7 @@ When developing services that use webhooks, you need a public HTTPS URL. Tunneli
 ## Core Features
 
 - **Automatic Tunnel Management**: Start, stop, and restart in the background.
-- **Multi-Provider Support**: Use `ngrok`, `localhost.run`, or other future providers.
+- **Multi-Provider Support**: Use `ngrok`, `localhost.run`, and other future providers.
 - **Multi-Tunnel Management**: Run multiple tunnels simultaneously for high availability or A/B testing.
 - **Health Check**: Optional component to monitor the status of each tunnel.
 - **Reliability**: Automatic restart on connection loss or failures.
