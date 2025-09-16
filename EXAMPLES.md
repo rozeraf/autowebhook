@@ -208,6 +208,101 @@ const [url] = await webhook.start();
 console.log(`Running at: ${url}`);
 ```
 
+## Best Practices
+
+### Error Handling
+
+1. **Always use try-catch blocks with async/await**
+   ```typescript
+   try {
+     const [url] = await webhook.start();
+     console.log('Webhook ready:', url);
+   } catch (error) {
+     console.error('Failed to start webhook:', error);
+   }
+   ```
+
+2. **Listen for critical events**
+   ```typescript
+   webhook.on('error', (error) => {
+     // Log to your error tracking service
+     errorTracker.capture(error);
+   });
+
+   webhook.on('tunnelDown', (name, error) => {
+     // Notify your monitoring system
+     monitor.alert(`Tunnel ${name} is down: ${error.message}`);
+   });
+   ```
+
+3. **Implement graceful shutdown**
+   ```typescript
+   ['SIGINT', 'SIGTERM'].forEach(signal => {
+     process.on(signal, async () => {
+       console.log('Shutting down...');
+       await webhook.stop();
+       process.exit(0);
+     });
+   });
+   ```
+
+### Performance Tips
+
+1. **Optimize health checks**
+   ```typescript
+   const webhook = new AutoWebhook({
+     tunnels: [{ name: 'api', provider: 'ngrok', port: 3000 }],
+     healthCheck: {
+       interval: 30000,    // Check every 30s instead of default 20s
+       timeout: 5000,      // Fail health check after 5s
+       maxFailures: 2      // Restart after 2 failures
+     }
+   });
+   ```
+
+2. **Use regional endpoints**
+   ```typescript
+   // Choose the closest region to your users
+   const webhook = new AutoWebhook({
+     tunnels: [{
+       name: 'eu-tunnel',
+       provider: 'ngrok',
+       port: 3000,
+       ngrok: { region: 'eu' }
+     }]
+   });
+   ```
+
+### Security Considerations
+
+1. **IP Whitelisting**
+   ```typescript
+   const webhook = new AutoWebhook({
+     tunnels: [{
+       name: 'secure-tunnel',
+       provider: 'ngrok',
+       port: 3000,
+       ngrok: {
+         allow_cidr: ['123.123.123.123/32', '10.0.0.0/24']
+       }
+     }]
+   });
+   ```
+
+2. **Basic Authentication**
+   ```typescript
+   const webhook = new AutoWebhook({
+     tunnels: [{
+       name: 'protected-tunnel',
+       provider: 'ngrok',
+       port: 3000,
+       ngrok: {
+         basic_auth: 'username:password'
+       }
+     }]
+   });
+   ```
+
 ## Example 6: Error Handling and Graceful Shutdown
 
 This example demonstrates proper error handling and cleanup.
