@@ -119,6 +119,44 @@ bun run lint
 
 All changes are documented in the [CHANGELOG.md](./CHANGELOG.md) file.
 
+## Troubleshooting
+
+### Common Issues
+
+1. **Tunnel fails to start**
+   - Check if the port is already in use
+   - Verify your ngrok authtoken if using premium features
+   - Ensure you have necessary permissions to execute the tunnel binary
+
+2. **Health check failures**
+   - Verify your network connection
+   - Check if your local server is responding
+   - Adjust health check timeout if network latency is high
+
+3. **"Port already in use" errors**
+   ```typescript
+   // Make sure to stop existing tunnels before starting new ones
+   await existingWebhook.stop();
+   await new AutoWebhook().start();
+   ```
+
+4. **TypeScript import issues**
+   ```typescript
+   // If you see type errors, make sure your tsconfig.json includes:
+   {
+     "compilerOptions": {
+       "moduleResolution": "bundler",
+       "esModuleInterop": true
+     }
+   }
+   ```
+
+### Getting Help
+
+- Open an issue on [GitHub](https://github.com/rozeraf/autowebhook/issues)
+- Check the [API Reference](./API.md) for detailed documentation
+- Review the [Examples](./EXAMPLES.md) for common usage patterns
+
 ## License
 
 This project is distributed under the GPL-3.0-only license. See the [LICENSE](./LICENSE) file for more information.
