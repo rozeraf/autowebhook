@@ -177,6 +177,26 @@ webhook.on('error', (error) => {
 });
 ```
 
+## Environment Variables
+
+AutoWebhook supports configuration through environment variables:
+
+| Variable                   | Description                                | Default     |
+|---------------------------|--------------------------------------------|-------------|
+| `AUTOWEBHOOK_PORT`        | Default port for all tunnels              | `3000`      |
+| `AUTOWEBHOOK_NGROK_AUTH`  | ngrok authentication token                | -           |
+| `AUTOWEBHOOK_NGROK_REGION`| Default region for ngrok tunnels         | `us`        |
+| `AUTOWEBHOOK_EXPANDED`    | Enable expanded logging                   | `false`     |
+| `AUTOWEBHOOK_HEALTH_CHECK`| Enable/disable health checks             | `true`      |
+
+Example usage:
+```bash
+# .env
+AUTOWEBHOOK_PORT=8080
+AUTOWEBHOOK_NGROK_AUTH=your_ngrok_token
+AUTOWEBHOOK_EXPANDED=true
+```
+
 ## TypeScript Support
 
 AutoWebhook v3.0+ includes full TypeScript definitions out of the box. All configuration objects and method return types are properly typed.
