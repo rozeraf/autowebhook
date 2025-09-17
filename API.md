@@ -93,7 +93,7 @@ This object defines a single tunnel to be managed by `AutoWebhook`.
 
 ### `NgrokTunnelConfig`
 
-This object provides detailed configuration for tunnels using `ngrok` as the provider.
+This object provides detailed configuration for tunnels using ngrok as the provider.
 
 | Field        | Type                          | Default  | Description                                                                                                     |
 |--------------|-------------------------------|----------|-----------------------------------------------------------------------------------------------------------------|
